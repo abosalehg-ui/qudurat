@@ -1,0 +1,2805 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>قدراتي - منصة التدريب على اختبار القدرات</title>
+    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700;800&family=Amiri:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #1a5f7a;
+            --primary-dark: #134b5f;
+            --primary-light: #2980b9;
+            --secondary: #f39c12;
+            --secondary-light: #f1c40f;
+            --success: #27ae60;
+            --danger: #e74c3c;
+            --warning: #f39c12;
+            --dark: #2c3e50;
+            --light: #ecf0f1;
+            --gray: #95a5a6;
+            --white: #ffffff;
+            --bg-gradient: linear-gradient(135deg, #1a5f7a 0%, #2980b9 50%, #3498db 100%);
+            --card-shadow: 0 10px 40px rgba(26, 95, 122, 0.15);
+            --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Tajawal', sans-serif;
+            background: linear-gradient(135deg, #f5f7fa 0%, #e4e8eb 100%);
+            min-height: 100vh;
+            color: var(--dark);
+            line-height: 1.8;
+        }
+
+        /* Navigation */
+        .navbar {
+            background: var(--bg-gradient);
+            padding: 1rem;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 1000;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+        }
+
+        .nav-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            color: var(--white);
+            text-decoration: none;
+            font-size: 1.5rem;
+            font-weight: 800;
+        }
+
+        .logo-icon {
+            width: 45px;
+            height: 45px;
+            background: rgba(255,255,255,0.2);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .nav-link {
+            color: rgba(255,255,255,0.9);
+            text-decoration: none;
+            padding: 0.6rem 1rem;
+            border-radius: 10px;
+            transition: var(--transition);
+            font-weight: 500;
+            font-size: 0.95rem;
+            white-space: nowrap;
+        }
+
+        .nav-link:hover, .nav-link.active {
+            background: rgba(255,255,255,0.2);
+            color: var(--white);
+        }
+
+        .nav-stats {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+        }
+
+        .stat-badge {
+            background: rgba(255,255,255,0.15);
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            color: var(--white);
+            font-size: 0.85rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        /* Mobile Menu */
+        .mobile-menu-btn {
+            display: none;
+            background: rgba(255,255,255,0.2);
+            border: none;
+            color: var(--white);
+            padding: 0.75rem;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 1.25rem;
+        }
+
+        @media (max-width: 900px) {
+            .mobile-menu-btn {
+                display: block;
+            }
+            .nav-links {
+                display: none;
+                width: 100%;
+                flex-direction: column;
+                background: rgba(0,0,0,0.1);
+                border-radius: 12px;
+                padding: 1rem;
+                margin-top: 1rem;
+            }
+            .nav-links.show {
+                display: flex;
+            }
+            .nav-stats {
+                display: none;
+            }
+        }
+
+        /* Main Content */
+        .main-content {
+            margin-top: 80px;
+            padding: 2rem 1rem;
+            max-width: 1400px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        /* Pages */
+        .page {
+            display: none;
+            animation: fadeIn 0.4s ease;
+        }
+
+        .page.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Hero Section */
+        .hero {
+            background: var(--bg-gradient);
+            border-radius: 24px;
+            padding: 3rem 2rem;
+            color: var(--white);
+            text-align: center;
+            margin-bottom: 2rem;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .hero::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.05'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+            animation: float 20s linear infinite;
+        }
+
+        @keyframes float {
+            0% { transform: translate(0, 0); }
+            100% { transform: translate(-30px, -30px); }
+        }
+
+        .hero-content {
+            position: relative;
+            z-index: 1;
+        }
+
+        .hero h1 {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+            font-weight: 800;
+        }
+
+        .hero p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+            max-width: 600px;
+            margin: 0 auto 2rem;
+        }
+
+        .hero-stats {
+            display: flex;
+            justify-content: center;
+            gap: 2rem;
+            flex-wrap: wrap;
+            margin-top: 2rem;
+        }
+
+        .hero-stat {
+            text-align: center;
+        }
+
+        .hero-stat-value {
+            font-size: 2.5rem;
+            font-weight: 800;
+            display: block;
+        }
+
+        .hero-stat-label {
+            font-size: 0.9rem;
+            opacity: 0.8;
+        }
+
+        /* Cards Grid */
+        .cards-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .card {
+            background: var(--white);
+            border-radius: 20px;
+            padding: 2rem;
+            box-shadow: var(--card-shadow);
+            transition: var(--transition);
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 50px rgba(26, 95, 122, 0.2);
+        }
+
+        .card-icon {
+            width: 70px;
+            height: 70px;
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .card-icon.verbal { background: linear-gradient(135deg, #9b59b6, #8e44ad); }
+        .card-icon.quant { background: linear-gradient(135deg, #3498db, #2980b9); }
+        .card-icon.test { background: linear-gradient(135deg, #27ae60, #229954); }
+        .card-icon.solved { background: linear-gradient(135deg, #f39c12, #e67e22); }
+
+        .card h3 {
+            font-size: 1.4rem;
+            margin-bottom: 0.5rem;
+            color: var(--dark);
+        }
+
+        .card p {
+            color: var(--gray);
+            font-size: 0.95rem;
+            margin-bottom: 1rem;
+        }
+
+        .card-meta {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .card-badge {
+            background: var(--light);
+            padding: 0.4rem 0.8rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            color: var(--dark);
+        }
+
+        /* Section Header */
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .section-title {
+            font-size: 1.8rem;
+            color: var(--dark);
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .section-title span {
+            font-size: 1.5rem;
+        }
+
+        /* Buttons */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.75rem 1.5rem;
+            border-radius: 12px;
+            font-family: 'Tajawal', sans-serif;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+            border: none;
+            text-decoration: none;
+        }
+
+        .btn-primary {
+            background: var(--bg-gradient);
+            color: var(--white);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(26, 95, 122, 0.3);
+        }
+
+        .btn-secondary {
+            background: var(--light);
+            color: var(--dark);
+        }
+
+        .btn-success {
+            background: var(--success);
+            color: var(--white);
+        }
+
+        .btn-danger {
+            background: var(--danger);
+            color: var(--white);
+        }
+
+        .btn-warning {
+            background: var(--warning);
+            color: var(--white);
+        }
+
+        .btn-sm {
+            padding: 0.5rem 1rem;
+            font-size: 0.875rem;
+        }
+
+        .btn-block {
+            width: 100%;
+            justify-content: center;
+        }
+
+        /* Sub Categories */
+        .sub-categories {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .sub-cat-card {
+            background: var(--white);
+            border-radius: 16px;
+            padding: 1.5rem;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.08);
+            transition: var(--transition);
+            cursor: pointer;
+            border: 2px solid transparent;
+        }
+
+        .sub-cat-card:hover, .sub-cat-card.active {
+            border-color: var(--primary);
+            transform: translateY(-3px);
+        }
+
+        .sub-cat-card h4 {
+            margin-bottom: 0.5rem;
+            color: var(--dark);
+        }
+
+        .sub-cat-card p {
+            font-size: 0.85rem;
+            color: var(--gray);
+        }
+
+        .sub-cat-progress {
+            margin-top: 1rem;
+            height: 6px;
+            background: var(--light);
+            border-radius: 3px;
+            overflow: hidden;
+        }
+
+        .sub-cat-progress-bar {
+            height: 100%;
+            background: var(--primary);
+            border-radius: 3px;
+            transition: width 0.5s ease;
+        }
+
+        /* Question Card */
+        .question-container {
+            background: var(--white);
+            border-radius: 20px;
+            padding: 2rem;
+            box-shadow: var(--card-shadow);
+            margin-bottom: 1.5rem;
+        }
+
+        .question-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .question-number {
+            background: var(--primary);
+            color: var(--white);
+            padding: 0.5rem 1rem;
+            border-radius: 10px;
+            font-weight: 600;
+        }
+
+        .question-difficulty {
+            padding: 0.4rem 0.8rem;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 500;
+        }
+
+        .difficulty-easy { background: #d5f5e3; color: #27ae60; }
+        .difficulty-medium { background: #fdebd0; color: #f39c12; }
+        .difficulty-hard { background: #fadbd8; color: #e74c3c; }
+
+        .question-text {
+            font-size: 1.2rem;
+            line-height: 2;
+            margin-bottom: 1.5rem;
+            color: var(--dark);
+        }
+
+        .question-context {
+            background: var(--light);
+            padding: 1.5rem;
+            border-radius: 12px;
+            margin-bottom: 1.5rem;
+            font-family: 'Amiri', serif;
+            font-size: 1.1rem;
+            line-height: 2.2;
+            border-right: 4px solid var(--primary);
+        }
+
+        .options-list {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+
+        .option {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 1rem 1.25rem;
+            background: var(--light);
+            border-radius: 12px;
+            cursor: pointer;
+            transition: var(--transition);
+            border: 2px solid transparent;
+        }
+
+        .option:hover {
+            background: #e8f4fc;
+            border-color: var(--primary-light);
+        }
+
+        .option.selected {
+            background: #d4edfc;
+            border-color: var(--primary);
+        }
+
+        .option.correct {
+            background: #d5f5e3;
+            border-color: var(--success);
+        }
+
+        .option.wrong {
+            background: #fadbd8;
+            border-color: var(--danger);
+        }
+
+        .option-letter {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: var(--white);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            color: var(--primary);
+            flex-shrink: 0;
+        }
+
+        .option.selected .option-letter {
+            background: var(--primary);
+            color: var(--white);
+        }
+
+        .option.correct .option-letter {
+            background: var(--success);
+            color: var(--white);
+        }
+
+        .option.wrong .option-letter {
+            background: var(--danger);
+            color: var(--white);
+        }
+
+        /* Timer */
+        .timer-container {
+            position: fixed;
+            top: 90px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--white);
+            padding: 0.75rem 2rem;
+            border-radius: 30px;
+            box-shadow: 0 5px 25px rgba(0,0,0,0.15);
+            display: none;
+            z-index: 999;
+        }
+
+        .timer-container.show {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .timer-icon {
+            font-size: 1.5rem;
+        }
+
+        .timer-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--primary);
+            font-family: 'Courier New', monospace;
+        }
+
+        .timer-value.warning {
+            color: var(--warning);
+            animation: pulse 1s infinite;
+        }
+
+        .timer-value.danger {
+            color: var(--danger);
+            animation: pulse 0.5s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        /* Progress Bar */
+        .progress-container {
+            background: var(--light);
+            border-radius: 10px;
+            height: 10px;
+            margin-bottom: 1.5rem;
+            overflow: hidden;
+        }
+
+        .progress-bar {
+            height: 100%;
+            background: var(--bg-gradient);
+            border-radius: 10px;
+            transition: width 0.3s ease;
+        }
+
+        /* Results */
+        .results-container {
+            background: var(--white);
+            border-radius: 20px;
+            padding: 2.5rem;
+            box-shadow: var(--card-shadow);
+            text-align: center;
+        }
+
+        .results-score {
+            width: 180px;
+            height: 180px;
+            border-radius: 50%;
+            margin: 0 auto 2rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }
+
+        .results-score::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            border-radius: 50%;
+            border: 8px solid var(--light);
+        }
+
+        .results-score.excellent { background: linear-gradient(135deg, #d5f5e3, #a9dfbf); }
+        .results-score.good { background: linear-gradient(135deg, #d4edfc, #aed6f1); }
+        .results-score.average { background: linear-gradient(135deg, #fdebd0, #f9e79f); }
+        .results-score.poor { background: linear-gradient(135deg, #fadbd8, #f5b7b1); }
+
+        .score-value {
+            font-size: 3rem;
+            font-weight: 800;
+            color: var(--dark);
+        }
+
+        .score-label {
+            font-size: 1rem;
+            color: var(--gray);
+        }
+
+        .results-details {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 1.5rem;
+            margin: 2rem 0;
+        }
+
+        .result-stat {
+            padding: 1.5rem;
+            border-radius: 16px;
+            background: var(--light);
+        }
+
+        .result-stat-value {
+            font-size: 2rem;
+            font-weight: 700;
+            display: block;
+            margin-bottom: 0.25rem;
+        }
+
+        .result-stat-label {
+            font-size: 0.9rem;
+            color: var(--gray);
+        }
+
+        .result-stat.correct .result-stat-value { color: var(--success); }
+        .result-stat.wrong .result-stat-value { color: var(--danger); }
+        .result-stat.time .result-stat-value { color: var(--primary); }
+
+        /* Analysis Section */
+        .analysis-section {
+            background: var(--white);
+            border-radius: 20px;
+            padding: 2rem;
+            box-shadow: var(--card-shadow);
+            margin-top: 1.5rem;
+        }
+
+        .analysis-title {
+            font-size: 1.3rem;
+            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .strength-weakness {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .sw-card {
+            padding: 1.5rem;
+            border-radius: 16px;
+        }
+
+        .sw-card.strength {
+            background: linear-gradient(135deg, #d5f5e3, #e8f8f0);
+            border-right: 4px solid var(--success);
+        }
+
+        .sw-card.weakness {
+            background: linear-gradient(135deg, #fadbd8, #fdf2f0);
+            border-right: 4px solid var(--danger);
+        }
+
+        .sw-card h4 {
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .sw-list {
+            list-style: none;
+        }
+
+        .sw-list li {
+            padding: 0.5rem 0;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        /* Saved Questions */
+        .saved-indicator {
+            position: absolute;
+            top: 1rem;
+            left: 1rem;
+            font-size: 1.5rem;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .saved-indicator:hover {
+            transform: scale(1.2);
+        }
+
+        /* Dashboard */
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .dashboard-card {
+            background: var(--white);
+            border-radius: 20px;
+            padding: 1.5rem;
+            box-shadow: var(--card-shadow);
+        }
+
+        .dashboard-card h3 {
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 1.1rem;
+        }
+
+        /* Chart Placeholder */
+        .chart-container {
+            height: 200px;
+            display: flex;
+            align-items: flex-end;
+            gap: 0.5rem;
+            padding: 1rem;
+            background: var(--light);
+            border-radius: 12px;
+        }
+
+        .chart-bar {
+            flex: 1;
+            background: var(--bg-gradient);
+            border-radius: 8px 8px 0 0;
+            transition: height 0.5s ease;
+            position: relative;
+        }
+
+        .chart-bar::after {
+            content: attr(data-value);
+            position: absolute;
+            top: -25px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        /* Admin Panel */
+        .admin-tabs {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 1.5rem;
+            flex-wrap: wrap;
+        }
+
+        .admin-tab {
+            padding: 0.75rem 1.5rem;
+            background: var(--light);
+            border: none;
+            border-radius: 12px;
+            font-family: 'Tajawal', sans-serif;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .admin-tab.active {
+            background: var(--primary);
+            color: var(--white);
+        }
+
+        .admin-form {
+            background: var(--white);
+            border-radius: 20px;
+            padding: 2rem;
+            box-shadow: var(--card-shadow);
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+            color: var(--dark);
+        }
+
+        .form-input, .form-select, .form-textarea {
+            width: 100%;
+            padding: 0.875rem 1rem;
+            border: 2px solid var(--light);
+            border-radius: 12px;
+            font-family: 'Tajawal', sans-serif;
+            font-size: 1rem;
+            transition: var(--transition);
+        }
+
+        .form-input:focus, .form-select:focus, .form-textarea:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+
+        .form-textarea {
+            min-height: 120px;
+            resize: vertical;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+        }
+
+        /* Questions Table */
+        .questions-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1rem;
+        }
+
+        .questions-table th,
+        .questions-table td {
+            padding: 1rem;
+            text-align: right;
+            border-bottom: 1px solid var(--light);
+        }
+
+        .questions-table th {
+            background: var(--light);
+            font-weight: 600;
+        }
+
+        .questions-table tr:hover td {
+            background: #f8fafc;
+        }
+
+        .table-actions {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .action-btn {
+            width: 36px;
+            height: 36px;
+            border-radius: 8px;
+            border: none;
+            cursor: pointer;
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .action-btn.edit {
+            background: #d4edfc;
+            color: var(--primary);
+        }
+
+        .action-btn.delete {
+            background: #fadbd8;
+            color: var(--danger);
+        }
+
+        /* Explanation */
+        .explanation-box {
+            background: linear-gradient(135deg, #e8f4fc, #f0f9ff);
+            border-radius: 16px;
+            padding: 1.5rem;
+            margin-top: 1.5rem;
+            border-right: 4px solid var(--primary);
+            display: none;
+        }
+
+        .explanation-box.show {
+            display: block;
+            animation: slideIn 0.3s ease;
+        }
+
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .explanation-title {
+            font-weight: 700;
+            margin-bottom: 0.75rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: var(--primary);
+        }
+
+        /* Footer */
+        .footer {
+            background: var(--dark);
+            color: var(--white);
+            padding: 2rem 1rem;
+            margin-top: 3rem;
+            text-align: center;
+        }
+
+        .footer-content {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .footer a {
+            color: var(--secondary);
+            text-decoration: none;
+        }
+
+        .footer-links {
+            display: flex;
+            justify-content: center;
+            gap: 2rem;
+            margin-bottom: 1.5rem;
+            flex-wrap: wrap;
+        }
+
+        /* Modals */
+        .modal {
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.5);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+            padding: 1rem;
+        }
+
+        .modal.show {
+            display: flex;
+        }
+
+        .modal-content {
+            background: var(--white);
+            border-radius: 20px;
+            padding: 2rem;
+            max-width: 500px;
+            width: 100%;
+            max-height: 90vh;
+            overflow-y: auto;
+            animation: modalIn 0.3s ease;
+        }
+
+        @keyframes modalIn {
+            from { opacity: 0; transform: scale(0.9); }
+            to { opacity: 1; transform: scale(1); }
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: var(--gray);
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .hero h1 {
+                font-size: 1.8rem;
+            }
+            .hero-stat-value {
+                font-size: 1.8rem;
+            }
+            .question-text {
+                font-size: 1.1rem;
+            }
+            .cards-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: var(--light);
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--primary);
+            border-radius: 4px;
+        }
+
+        /* Back Button */
+        .back-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: var(--primary);
+            text-decoration: none;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .back-btn:hover {
+            color: var(--primary-dark);
+        }
+
+        /* Empty State */
+        .empty-state {
+            text-align: center;
+            padding: 4rem 2rem;
+            color: var(--gray);
+        }
+
+        .empty-state-icon {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+            opacity: 0.5;
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="nav-container">
+            <a href="#" class="logo" onclick="showPage('home')">
+                <div class="logo-icon">📚</div>
+                <span>قدراتي</span>
+            </a>
+            
+            <button class="mobile-menu-btn" onclick="toggleMobileMenu()">☰</button>
+            
+            <div class="nav-links" id="navLinks">
+                <a href="#" class="nav-link active" onclick="showPage('home')" data-page="home">الرئيسية</a>
+                <a href="#" class="nav-link" onclick="showPage('verbal')" data-page="verbal">اللفظي</a>
+                <a href="#" class="nav-link" onclick="showPage('quant')" data-page="quant">الكمي</a>
+                <a href="#" class="nav-link" onclick="showPage('tests')" data-page="tests">الاختبارات</a>
+                <a href="#" class="nav-link" onclick="showPage('solved')" data-page="solved">نماذج محلولة</a>
+                <a href="#" class="nav-link" onclick="showPage('saved')" data-page="saved">المحفوظات</a>
+                <a href="#" class="nav-link" onclick="showPage('progress')" data-page="progress">تقدمي</a>
+                <a href="#" class="nav-link" onclick="showPage('admin')" data-page="admin">لوحة التحكم</a>
+            </div>
+            
+            <div class="nav-stats">
+                <div class="stat-badge">
+                    <span>🔥</span>
+                    <span id="streakCount">0</span> يوم متواصل
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Timer -->
+    <div class="timer-container" id="timerContainer">
+        <span class="timer-icon">⏱️</span>
+        <span class="timer-value" id="timerValue">00:00</span>
+    </div>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        
+        <!-- Home Page -->
+        <div class="page active" id="page-home">
+            <div class="hero">
+                <div class="hero-content">
+                    <h1>🎯 استعد لاختبار القدرات بثقة</h1>
+                    <p>منصتك الشاملة للتدريب على اختبار قياس - أسئلة تفاعلية، تحليل ذكي، ومتابعة دقيقة لتقدمك</p>
+                    <button class="btn btn-primary" onclick="showPage('tests')" style="background: rgba(255,255,255,0.2); backdrop-filter: blur(10px);">
+                        ابدأ اختبار تجريبي الآن ←
+                    </button>
+                    <div class="hero-stats">
+                        <div class="hero-stat">
+                            <span class="hero-stat-value" id="totalQuestions">500+</span>
+                            <span class="hero-stat-label">سؤال متنوع</span>
+                        </div>
+                        <div class="hero-stat">
+                            <span class="hero-stat-value" id="totalTests">20+</span>
+                            <span class="hero-stat-label">اختبار تجريبي</span>
+                        </div>
+                        <div class="hero-stat">
+                            <span class="hero-stat-value" id="userScore">0%</span>
+                            <span class="hero-stat-label">متوسط أدائك</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="section-header">
+                <h2 class="section-title"><span>📂</span> الأقسام الرئيسية</h2>
+            </div>
+
+            <div class="cards-grid">
+                <div class="card" onclick="showPage('verbal')">
+                    <div class="card-icon verbal">📖</div>
+                    <h3>القسم اللفظي</h3>
+                    <p>تناظر لفظي، إكمال جمل، استيعاب مقروء، والخطأ السياقي</p>
+                    <div class="card-meta">
+                        <span class="card-badge">4 فئات</span>
+                        <span class="card-badge" id="verbalProgress">0% مكتمل</span>
+                    </div>
+                </div>
+
+                <div class="card" onclick="showPage('quant')">
+                    <div class="card-icon quant">🔢</div>
+                    <h3>القسم الكمي</h3>
+                    <p>نسب ومعادلات، إحصاء، هندسة، ومقارنات</p>
+                    <div class="card-meta">
+                        <span class="card-badge">5 فئات</span>
+                        <span class="card-badge" id="quantProgress">0% مكتمل</span>
+                    </div>
+                </div>
+
+                <div class="card" onclick="showPage('tests')">
+                    <div class="card-icon test">📝</div>
+                    <h3>اختبارات تجريبية</h3>
+                    <p>اختبارات كاملة تحاكي اختبار قياس الحقيقي مع تصحيح تلقائي</p>
+                    <div class="card-meta">
+                        <span class="card-badge">مؤقت زمني</span>
+                        <span class="card-badge">تقرير أداء</span>
+                    </div>
+                </div>
+
+                <div class="card" onclick="showPage('solved')">
+                    <div class="card-icon solved">💡</div>
+                    <h3>نماذج محلولة</h3>
+                    <p>شروحات تفصيلية خطوة بخطوة لفهم طريقة الحل</p>
+                    <div class="card-meta">
+                        <span class="card-badge">شرح مفصل</span>
+                        <span class="card-badge">أمثلة متنوعة</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Recommended Section -->
+            <div class="section-header">
+                <h2 class="section-title"><span>🎯</span> مقترحات لك</h2>
+            </div>
+            <div class="cards-grid" id="recommendedQuestions">
+                <div class="empty-state">
+                    <div class="empty-state-icon">📊</div>
+                    <p>ابدأ بحل بعض الأسئلة لنقترح لك أسئلة مناسبة لمستواك</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Verbal Section Page -->
+        <div class="page" id="page-verbal">
+            <span class="back-btn" onclick="showPage('home')">→ العودة للرئيسية</span>
+            
+            <div class="section-header">
+                <h2 class="section-title"><span>📖</span> القسم اللفظي</h2>
+            </div>
+
+            <div class="sub-categories">
+                <div class="sub-cat-card" onclick="startPractice('verbal', 'analogy')">
+                    <h4>🔄 التناظر اللفظي</h4>
+                    <p>اكتشف العلاقة بين الكلمات</p>
+                    <div class="sub-cat-progress">
+                        <div class="sub-cat-progress-bar" style="width: 0%"></div>
+                    </div>
+                </div>
+                <div class="sub-cat-card" onclick="startPractice('verbal', 'completion')">
+                    <h4>✏️ إكمال الجمل</h4>
+                    <p>أكمل الجملة بالكلمة المناسبة</p>
+                    <div class="sub-cat-progress">
+                        <div class="sub-cat-progress-bar" style="width: 0%"></div>
+                    </div>
+                </div>
+                <div class="sub-cat-card" onclick="startPractice('verbal', 'reading')">
+                    <h4>📚 الاستيعاب المقروء</h4>
+                    <p>اقرأ وأجب عن الأسئلة</p>
+                    <div class="sub-cat-progress">
+                        <div class="sub-cat-progress-bar" style="width: 0%"></div>
+                    </div>
+                </div>
+                <div class="sub-cat-card" onclick="startPractice('verbal', 'context')">
+                    <h4>🔍 الخطأ السياقي</h4>
+                    <p>حدد الكلمة الخاطئة في السياق</p>
+                    <div class="sub-cat-progress">
+                        <div class="sub-cat-progress-bar" style="width: 0%"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quantitative Section Page -->
+        <div class="page" id="page-quant">
+            <span class="back-btn" onclick="showPage('home')">→ العودة للرئيسية</span>
+            
+            <div class="section-header">
+                <h2 class="section-title"><span>🔢</span> القسم الكمي</h2>
+            </div>
+
+            <div class="sub-categories">
+                <div class="sub-cat-card" onclick="startPractice('quant', 'ratio')">
+                    <h4>📊 النسب والتناسب</h4>
+                    <p>مسائل النسب والمعادلات</p>
+                    <div class="sub-cat-progress">
+                        <div class="sub-cat-progress-bar" style="width: 0%"></div>
+                    </div>
+                </div>
+                <div class="sub-cat-card" onclick="startPractice('quant', 'algebra')">
+                    <h4>🔣 الجبر والمعادلات</h4>
+                    <p>حل المعادلات الجبرية</p>
+                    <div class="sub-cat-progress">
+                        <div class="sub-cat-progress-bar" style="width: 0%"></div>
+                    </div>
+                </div>
+                <div class="sub-cat-card" onclick="startPractice('quant', 'statistics')">
+                    <h4>📈 الإحصاء</h4>
+                    <p>المتوسط والوسيط والمنوال</p>
+                    <div class="sub-cat-progress">
+                        <div class="sub-cat-progress-bar" style="width: 0%"></div>
+                    </div>
+                </div>
+                <div class="sub-cat-card" onclick="startPractice('quant', 'geometry')">
+                    <h4>📐 الهندسة</h4>
+                    <p>المساحات والزوايا والأشكال</p>
+                    <div class="sub-cat-progress">
+                        <div class="sub-cat-progress-bar" style="width: 0%"></div>
+                    </div>
+                </div>
+                <div class="sub-cat-card" onclick="startPractice('quant', 'comparison')">
+                    <h4>⚖️ المقارنة</h4>
+                    <p>قارن بين القيمتين</p>
+                    <div class="sub-cat-progress">
+                        <div class="sub-cat-progress-bar" style="width: 0%"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tests Page -->
+        <div class="page" id="page-tests">
+            <span class="back-btn" onclick="showPage('home')">→ العودة للرئيسية</span>
+            
+            <div class="section-header">
+                <h2 class="section-title"><span>📝</span> الاختبارات التجريبية</h2>
+            </div>
+
+            <div class="cards-grid" id="testsList">
+                <!-- Tests will be loaded here -->
+            </div>
+        </div>
+
+        <!-- Practice Page -->
+        <div class="page" id="page-practice">
+            <span class="back-btn" id="practiceBackBtn">→ العودة</span>
+            
+            <div class="progress-container">
+                <div class="progress-bar" id="practiceProgress" style="width: 0%"></div>
+            </div>
+
+            <div class="question-container" id="questionContainer">
+                <!-- Question will be loaded here -->
+            </div>
+
+            <div class="explanation-box" id="explanationBox">
+                <div class="explanation-title">💡 الشرح</div>
+                <p id="explanationText"></p>
+            </div>
+
+            <div style="display: flex; gap: 1rem; justify-content: center; margin-top: 1.5rem;">
+                <button class="btn btn-secondary" id="prevBtn" onclick="previousQuestion()">← السابق</button>
+                <button class="btn btn-primary" id="nextBtn" onclick="nextQuestion()">التالي →</button>
+                <button class="btn btn-success" id="finishBtn" onclick="finishPractice()" style="display: none;">إنهاء ✓</button>
+            </div>
+        </div>
+
+        <!-- Results Page -->
+        <div class="page" id="page-results">
+            <div class="results-container" id="resultsContainer">
+                <!-- Results will be loaded here -->
+            </div>
+        </div>
+
+        <!-- Solved Examples Page -->
+        <div class="page" id="page-solved">
+            <span class="back-btn" onclick="showPage('home')">→ العودة للرئيسية</span>
+            
+            <div class="section-header">
+                <h2 class="section-title"><span>💡</span> نماذج محلولة</h2>
+            </div>
+
+            <div class="admin-tabs">
+                <button class="admin-tab active" onclick="filterSolved('all')">الكل</button>
+                <button class="admin-tab" onclick="filterSolved('verbal')">اللفظي</button>
+                <button class="admin-tab" onclick="filterSolved('quant')">الكمي</button>
+            </div>
+
+            <div id="solvedList">
+                <!-- Solved examples will be loaded here -->
+            </div>
+        </div>
+
+        <!-- Saved Questions Page -->
+        <div class="page" id="page-saved">
+            <span class="back-btn" onclick="showPage('home')">→ العودة للرئيسية</span>
+            
+            <div class="section-header">
+                <h2 class="section-title"><span>🔖</span> الأسئلة المحفوظة</h2>
+            </div>
+
+            <div id="savedList">
+                <!-- Saved questions will be loaded here -->
+            </div>
+        </div>
+
+        <!-- Progress Page -->
+        <div class="page" id="page-progress">
+            <span class="back-btn" onclick="showPage('home')">→ العودة للرئيسية</span>
+            
+            <div class="section-header">
+                <h2 class="section-title"><span>📊</span> تقدمي وإحصائياتي</h2>
+            </div>
+
+            <div class="dashboard-grid">
+                <div class="dashboard-card">
+                    <h3>📈 الأداء العام</h3>
+                    <div class="chart-container" id="performanceChart">
+                        <!-- Chart will be rendered here -->
+                    </div>
+                </div>
+                <div class="dashboard-card">
+                    <h3>🎯 نسبة الإجابات الصحيحة</h3>
+                    <div id="accuracyStats">
+                        <!-- Stats will be loaded here -->
+                    </div>
+                </div>
+                <div class="dashboard-card">
+                    <h3>📚 الأسئلة المحلولة</h3>
+                    <div id="questionsStats">
+                        <!-- Stats will be loaded here -->
+                    </div>
+                </div>
+                <div class="dashboard-card">
+                    <h3>⏱️ الوقت المستغرق</h3>
+                    <div id="timeStats">
+                        <!-- Stats will be loaded here -->
+                    </div>
+                </div>
+            </div>
+
+            <div class="analysis-section">
+                <h3 class="analysis-title">📊 تحليل الأداء</h3>
+                <div class="strength-weakness">
+                    <div class="sw-card strength">
+                        <h4>✅ نقاط القوة</h4>
+                        <ul class="sw-list" id="strengthsList">
+                            <li>⭐ أكمل بعض الاختبارات لمعرفة نقاط قوتك</li>
+                        </ul>
+                    </div>
+                    <div class="sw-card weakness">
+                        <h4>⚠️ تحتاج تحسين</h4>
+                        <ul class="sw-list" id="weaknessesList">
+                            <li>📝 أكمل بعض الاختبارات لمعرفة ما تحتاج تحسينه</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Admin Page -->
+        <div class="page" id="page-admin">
+            <span class="back-btn" onclick="showPage('home')">→ العودة للرئيسية</span>
+            
+            <div class="section-header">
+                <h2 class="section-title"><span>⚙️</span> لوحة التحكم</h2>
+            </div>
+
+            <div class="admin-tabs">
+                <button class="admin-tab active" onclick="showAdminTab('add')">إضافة سؤال</button>
+                <button class="admin-tab" onclick="showAdminTab('manage')">إدارة الأسئلة</button>
+                <button class="admin-tab" onclick="showAdminTab('tests')">إدارة الاختبارات</button>
+            </div>
+
+            <!-- Add Question Form -->
+            <div class="admin-form" id="adminAdd">
+                <h3 style="margin-bottom: 1.5rem;">➕ إضافة سؤال جديد</h3>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">القسم</label>
+                        <select class="form-select" id="qSection" onchange="updateSubcategories()">
+                            <option value="verbal">اللفظي</option>
+                            <option value="quant">الكمي</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">الفئة الفرعية</label>
+                        <select class="form-select" id="qSubcategory">
+                            <option value="analogy">التناظر اللفظي</option>
+                            <option value="completion">إكمال الجمل</option>
+                            <option value="reading">الاستيعاب المقروء</option>
+                            <option value="context">الخطأ السياقي</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">مستوى الصعوبة</label>
+                        <select class="form-select" id="qDifficulty">
+                            <option value="easy">سهل</option>
+                            <option value="medium">متوسط</option>
+                            <option value="hard">صعب</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">نص السياق (اختياري - للاستيعاب المقروء)</label>
+                    <textarea class="form-textarea" id="qContext" placeholder="أدخل نص القراءة هنا..."></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">نص السؤال</label>
+                    <textarea class="form-textarea" id="qText" placeholder="أدخل نص السؤال..."></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">الخيارات</label>
+                    <div class="form-row">
+                        <input type="text" class="form-input" id="optionA" placeholder="أ) الخيار الأول">
+                        <input type="text" class="form-input" id="optionB" placeholder="ب) الخيار الثاني">
+                    </div>
+                    <div class="form-row" style="margin-top: 0.5rem;">
+                        <input type="text" class="form-input" id="optionC" placeholder="ج) الخيار الثالث">
+                        <input type="text" class="form-input" id="optionD" placeholder="د) الخيار الرابع">
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">الإجابة الصحيحة</label>
+                        <select class="form-select" id="qCorrect">
+                            <option value="0">أ</option>
+                            <option value="1">ب</option>
+                            <option value="2">ج</option>
+                            <option value="3">د</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">الشرح التفصيلي</label>
+                    <textarea class="form-textarea" id="qExplanation" placeholder="اشرح طريقة الحل خطوة بخطوة..."></textarea>
+                </div>
+
+                <button class="btn btn-success btn-block" onclick="addQuestion()">
+                    ✓ حفظ السؤال
+                </button>
+            </div>
+
+            <!-- Manage Questions -->
+            <div class="admin-form" id="adminManage" style="display: none;">
+                <h3 style="margin-bottom: 1.5rem;">📋 إدارة الأسئلة</h3>
+                
+                <div class="form-row" style="margin-bottom: 1.5rem;">
+                    <select class="form-select" id="filterSection" onchange="filterQuestions()">
+                        <option value="all">كل الأقسام</option>
+                        <option value="verbal">اللفظي</option>
+                        <option value="quant">الكمي</option>
+                    </select>
+                    <select class="form-select" id="filterDifficulty" onchange="filterQuestions()">
+                        <option value="all">كل المستويات</option>
+                        <option value="easy">سهل</option>
+                        <option value="medium">متوسط</option>
+                        <option value="hard">صعب</option>
+                    </select>
+                </div>
+
+                <div style="overflow-x: auto;">
+                    <table class="questions-table" id="questionsTable">
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>السؤال</th>
+                                <th>القسم</th>
+                                <th>الصعوبة</th>
+                                <th>إجراءات</th>
+                            </tr>
+                        </thead>
+                        <tbody id="questionsTableBody">
+                            <!-- Questions will be loaded here -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Manage Tests -->
+            <div class="admin-form" id="adminTests" style="display: none;">
+                <h3 style="margin-bottom: 1.5rem;">📝 إدارة الاختبارات</h3>
+                
+                <div class="form-group">
+                    <label class="form-label">اسم الاختبار</label>
+                    <input type="text" class="form-input" id="testName" placeholder="مثال: اختبار تجريبي 1">
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">عدد الأسئلة اللفظية</label>
+                        <input type="number" class="form-input" id="testVerbalCount" value="10" min="0">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">عدد الأسئلة الكمية</label>
+                        <input type="number" class="form-input" id="testQuantCount" value="10" min="0">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">الوقت (بالدقائق)</label>
+                        <input type="number" class="form-input" id="testTime" value="30" min="1">
+                    </div>
+                </div>
+
+                <button class="btn btn-success" onclick="createTest()">
+                    ✓ إنشاء اختبار
+                </button>
+
+                <h4 style="margin: 2rem 0 1rem;">الاختبارات الحالية</h4>
+                <div id="adminTestsList">
+                    <!-- Tests will be loaded here -->
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="footer-content">
+            <div class="footer-links">
+                <a href="#" onclick="showPage('home')">الرئيسية</a>
+                <a href="#" onclick="showPage('verbal')">اللفظي</a>
+                <a href="#" onclick="showPage('quant')">الكمي</a>
+                <a href="#" onclick="showPage('tests')">الاختبارات</a>
+                <a href="#" onclick="showPage('admin')">لوحة التحكم</a>
+            </div>
+            <p>تطوير: <strong>عبدالكريم العبود</strong> | <a href="mailto:abo.saleh.g@gmail.com">abo.saleh.g@gmail.com</a></p>
+            <p style="margin-top: 0.5rem; opacity: 0.7;">© 2024 قدراتي - جميع الحقوق محفوظة</p>
+        </div>
+    </footer>
+
+    <!-- Edit Question Modal -->
+    <div class="modal" id="editModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>تعديل السؤال</h3>
+                <button class="modal-close" onclick="closeEditModal()">×</button>
+            </div>
+            <div id="editModalContent">
+                <!-- Edit form will be loaded here -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ==================== Data Store ====================
+        let questionsDB = [];
+        let testsDB = [];
+        let userProgress = {
+            streak: 0,
+            lastActive: null,
+            questionsAnswered: 0,
+            correctAnswers: 0,
+            savedQuestions: [],
+            categoryProgress: {},
+            testResults: [],
+            dailyStats: {}
+        };
+
+        // Current session state
+        let currentSession = {
+            mode: null, // 'practice' or 'test'
+            section: null,
+            subcategory: null,
+            questions: [],
+            currentIndex: 0,
+            answers: [],
+            startTime: null,
+            timeLimit: null,
+            timerInterval: null
+        };
+
+        // ==================== Initialization ====================
+        function init() {
+            loadData();
+            loadSampleData();
+            updateUI();
+            updateStreak();
+            renderTests();
+            renderSolvedExamples();
+            renderSavedQuestions();
+            renderProgress();
+            renderQuestionsTable();
+        }
+
+        function loadData() {
+            const stored = localStorage.getItem('qudurat_data');
+            if (stored) {
+                const data = JSON.parse(stored);
+                questionsDB = data.questions || [];
+                testsDB = data.tests || [];
+                userProgress = { ...userProgress, ...data.progress };
+            }
+        }
+
+        function saveData() {
+            localStorage.setItem('qudurat_data', JSON.stringify({
+                questions: questionsDB,
+                tests: testsDB,
+                progress: userProgress
+            }));
+        }
+
+        function loadSampleData() {
+            if (questionsDB.length === 0) {
+                questionsDB = getSampleQuestions();
+            }
+            if (testsDB.length === 0) {
+                testsDB = getSampleTests();
+            }
+            saveData();
+        }
+
+        // ==================== Sample Data ====================
+        function getSampleQuestions() {
+            return [
+                // التناظر اللفظي
+                {
+                    id: 1,
+                    section: 'verbal',
+                    subcategory: 'analogy',
+                    difficulty: 'easy',
+                    text: 'قلم : كتابة',
+                    options: ['سيارة : طريق', 'مقص : قطع', 'كتاب : مكتبة', 'باب : منزل'],
+                    correct: 1,
+                    explanation: 'العلاقة هي أداة ووظيفتها. القلم أداة للكتابة، والمقص أداة للقطع.'
+                },
+                {
+                    id: 2,
+                    section: 'verbal',
+                    subcategory: 'analogy',
+                    difficulty: 'medium',
+                    text: 'طبيب : مستشفى',
+                    options: ['معلم : مدرسة', 'سيارة : شارع', 'كتاب : ورق', 'ماء : نهر'],
+                    correct: 0,
+                    explanation: 'العلاقة هي شخص ومكان عمله. الطبيب يعمل في المستشفى، والمعلم يعمل في المدرسة.'
+                },
+                {
+                    id: 3,
+                    section: 'verbal',
+                    subcategory: 'analogy',
+                    difficulty: 'hard',
+                    text: 'جذر : شجرة',
+                    options: ['سقف : منزل', 'أساس : بناء', 'باب : غرفة', 'نافذة : جدار'],
+                    correct: 1,
+                    explanation: 'العلاقة هي الجزء الذي يثبت الكل. الجذر يثبت الشجرة، والأساس يثبت البناء.'
+                },
+                // إكمال الجمل
+                {
+                    id: 4,
+                    section: 'verbal',
+                    subcategory: 'completion',
+                    difficulty: 'easy',
+                    text: 'العلم نور و______ ظلام',
+                    options: ['الكتاب', 'الجهل', 'القراءة', 'المعرفة'],
+                    correct: 1,
+                    explanation: 'الجملة تقارن بين العلم والجهل كضدين، فالعلم نور والجهل ظلام.'
+                },
+                {
+                    id: 5,
+                    section: 'verbal',
+                    subcategory: 'completion',
+                    difficulty: 'medium',
+                    text: 'من جد ______ ومن زرع حصد',
+                    options: ['نجح', 'وجد', 'فاز', 'ربح'],
+                    correct: 1,
+                    explanation: 'هذا مثل عربي شهير "من جد وجد" أي من اجتهد وجد ما يريد.'
+                },
+                // الاستيعاب المقروء
+                {
+                    id: 6,
+                    section: 'verbal',
+                    subcategory: 'reading',
+                    difficulty: 'medium',
+                    context: 'القراءة غذاء العقل والروح، فهي تفتح آفاقاً جديدة للإنسان وتزيد من معرفته بالعالم من حوله. إن الشخص الذي يداوم على القراءة يكتسب مهارات لغوية وفكرية تميزه عن غيره، كما أنها تنمي الخيال وتوسع المدارك.',
+                    text: 'ما الفكرة الرئيسية للنص؟',
+                    options: ['أهمية القراءة وفوائدها', 'أنواع الكتب المختلفة', 'كيفية تعلم القراءة', 'تاريخ الكتابة'],
+                    correct: 0,
+                    explanation: 'النص يتحدث بشكل رئيسي عن أهمية القراءة وفوائدها للعقل والروح والمهارات.'
+                },
+                // الخطأ السياقي
+                {
+                    id: 7,
+                    section: 'verbal',
+                    subcategory: 'context',
+                    difficulty: 'medium',
+                    text: 'الشمس تشرق من الغرب كل صباح وتضيء العالم بنورها الساطع',
+                    options: ['تشرق', 'الغرب', 'صباح', 'الساطع'],
+                    correct: 1,
+                    explanation: 'الخطأ هو كلمة "الغرب"، والصحيح هو "الشرق" لأن الشمس تشرق من الشرق.'
+                },
+                // النسب والتناسب
+                {
+                    id: 8,
+                    section: 'quant',
+                    subcategory: 'ratio',
+                    difficulty: 'easy',
+                    text: 'إذا كانت نسبة الأولاد إلى البنات في فصل هي 3:2 وعدد الأولاد 15، فما عدد البنات؟',
+                    options: ['8', '10', '12', '15'],
+                    correct: 1,
+                    explanation: '3:2 تعني أن لكل 3 أولاد هناك 2 بنات. إذا كان الأولاد 15، نقسم على 3 نحصل على 5، ثم نضرب في 2 نحصل على 10 بنات.'
+                },
+                {
+                    id: 9,
+                    section: 'quant',
+                    subcategory: 'ratio',
+                    difficulty: 'medium',
+                    text: 'إذا كان ثمن 5 كتب 75 ريال، فكم ثمن 8 كتب؟',
+                    options: ['100 ريال', '110 ريال', '120 ريال', '130 ريال'],
+                    correct: 2,
+                    explanation: 'سعر الكتاب الواحد = 75 ÷ 5 = 15 ريال. سعر 8 كتب = 15 × 8 = 120 ريال.'
+                },
+                // الجبر
+                {
+                    id: 10,
+                    section: 'quant',
+                    subcategory: 'algebra',
+                    difficulty: 'easy',
+                    text: 'إذا كان س + 7 = 15، فما قيمة س؟',
+                    options: ['6', '7', '8', '22'],
+                    correct: 2,
+                    explanation: 'س + 7 = 15، إذن س = 15 - 7 = 8'
+                },
+                {
+                    id: 11,
+                    section: 'quant',
+                    subcategory: 'algebra',
+                    difficulty: 'medium',
+                    text: 'إذا كان 2س - 4 = 10، فما قيمة س؟',
+                    options: ['5', '6', '7', '8'],
+                    correct: 2,
+                    explanation: '2س - 4 = 10، إذن 2س = 14، وبالتالي س = 7'
+                },
+                // الإحصاء
+                {
+                    id: 12,
+                    section: 'quant',
+                    subcategory: 'statistics',
+                    difficulty: 'easy',
+                    text: 'ما متوسط الأعداد التالية: 10، 20، 30؟',
+                    options: ['15', '20', '25', '30'],
+                    correct: 1,
+                    explanation: 'المتوسط = مجموع الأعداد ÷ عددها = (10+20+30) ÷ 3 = 60 ÷ 3 = 20'
+                },
+                {
+                    id: 13,
+                    section: 'quant',
+                    subcategory: 'statistics',
+                    difficulty: 'medium',
+                    text: 'ما الوسيط للأعداد: 3، 7، 2، 9، 5؟',
+                    options: ['3', '5', '7', '9'],
+                    correct: 1,
+                    explanation: 'نرتب الأعداد تصاعدياً: 2، 3، 5، 7، 9. الوسيط هو العدد الأوسط = 5'
+                },
+                // الهندسة
+                {
+                    id: 14,
+                    section: 'quant',
+                    subcategory: 'geometry',
+                    difficulty: 'easy',
+                    text: 'ما مساحة مربع طول ضلعه 5 سم؟',
+                    options: ['10 سم²', '20 سم²', '25 سم²', '30 سم²'],
+                    correct: 2,
+                    explanation: 'مساحة المربع = طول الضلع × طول الضلع = 5 × 5 = 25 سم²'
+                },
+                {
+                    id: 15,
+                    section: 'quant',
+                    subcategory: 'geometry',
+                    difficulty: 'medium',
+                    text: 'ما محيط مستطيل طوله 8 سم وعرضه 5 سم؟',
+                    options: ['13 سم', '26 سم', '40 سم', '45 سم'],
+                    correct: 1,
+                    explanation: 'محيط المستطيل = 2 × (الطول + العرض) = 2 × (8 + 5) = 2 × 13 = 26 سم'
+                },
+                // المقارنة
+                {
+                    id: 16,
+                    section: 'quant',
+                    subcategory: 'comparison',
+                    difficulty: 'easy',
+                    text: 'قارن بين: القيمة الأولى: 3/4 | القيمة الثانية: 0.8',
+                    options: ['الأولى أكبر', 'الثانية أكبر', 'متساويتان', 'لا يمكن المقارنة'],
+                    correct: 1,
+                    explanation: '3/4 = 0.75، و 0.8 > 0.75، إذن القيمة الثانية أكبر.'
+                },
+                {
+                    id: 17,
+                    section: 'quant',
+                    subcategory: 'comparison',
+                    difficulty: 'hard',
+                    text: 'قارن بين: القيمة الأولى: √16 + √9 | القيمة الثانية: √25',
+                    options: ['الأولى أكبر', 'الثانية أكبر', 'متساويتان', 'لا يمكن المقارنة'],
+                    correct: 0,
+                    explanation: '√16 + √9 = 4 + 3 = 7، و √25 = 5، إذن القيمة الأولى (7) أكبر من الثانية (5).'
+                },
+                // أسئلة إضافية
+                {
+                    id: 18,
+                    section: 'verbal',
+                    subcategory: 'analogy',
+                    difficulty: 'medium',
+                    text: 'سماء : أزرق',
+                    options: ['عشب : أخضر', 'شمس : ليل', 'بحر : سمك', 'جبل : سهل'],
+                    correct: 0,
+                    explanation: 'العلاقة هي شيء ولونه المميز. السماء لونها أزرق، والعشب لونه أخضر.'
+                },
+                {
+                    id: 19,
+                    section: 'quant',
+                    subcategory: 'algebra',
+                    difficulty: 'hard',
+                    text: 'إذا كان (س + 2)² = 25، فما قيمة س الموجبة؟',
+                    options: ['2', '3', '4', '5'],
+                    correct: 1,
+                    explanation: '(س + 2)² = 25، إذن س + 2 = 5 أو س + 2 = -5. القيمة الموجبة: س = 5 - 2 = 3'
+                },
+                {
+                    id: 20,
+                    section: 'quant',
+                    subcategory: 'geometry',
+                    difficulty: 'hard',
+                    text: 'مثلث قائم الزاوية طول أحد ضلعيه القائمين 3 سم والآخر 4 سم، ما طول الوتر؟',
+                    options: ['5 سم', '6 سم', '7 سم', '8 سم'],
+                    correct: 0,
+                    explanation: 'باستخدام نظرية فيثاغورس: الوتر² = 3² + 4² = 9 + 16 = 25، إذن الوتر = 5 سم'
+                }
+            ];
+        }
+
+        function getSampleTests() {
+            return [
+                {
+                    id: 1,
+                    name: 'اختبار تجريبي شامل 1',
+                    verbalCount: 10,
+                    quantCount: 10,
+                    timeLimit: 30,
+                    description: 'اختبار شامل يحتوي على 20 سؤال'
+                },
+                {
+                    id: 2,
+                    name: 'اختبار سريع - لفظي',
+                    verbalCount: 10,
+                    quantCount: 0,
+                    timeLimit: 15,
+                    description: 'اختبار سريع للقسم اللفظي'
+                },
+                {
+                    id: 3,
+                    name: 'اختبار سريع - كمي',
+                    verbalCount: 0,
+                    quantCount: 10,
+                    timeLimit: 15,
+                    description: 'اختبار سريع للقسم الكمي'
+                }
+            ];
+        }
+
+        // ==================== Navigation ====================
+        function showPage(pageName) {
+            document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+            document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
+            
+            const page = document.getElementById(`page-${pageName}`);
+            if (page) page.classList.add('active');
+            
+            const link = document.querySelector(`.nav-link[data-page="${pageName}"]`);
+            if (link) link.classList.add('active');
+
+            // Stop timer if leaving practice/test
+            if (pageName !== 'practice' && currentSession.timerInterval) {
+                clearInterval(currentSession.timerInterval);
+                document.getElementById('timerContainer').classList.remove('show');
+            }
+
+            // Refresh content
+            if (pageName === 'tests') renderTests();
+            if (pageName === 'saved') renderSavedQuestions();
+            if (pageName === 'progress') renderProgress();
+            if (pageName === 'solved') renderSolvedExamples();
+
+            // Scroll to top
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function toggleMobileMenu() {
+            document.getElementById('navLinks').classList.toggle('show');
+        }
+
+        // ==================== Practice Mode ====================
+        function startPractice(section, subcategory) {
+            const questions = questionsDB.filter(q => 
+                q.section === section && q.subcategory === subcategory
+            );
+
+            if (questions.length === 0) {
+                alert('لا توجد أسئلة في هذا القسم حالياً');
+                return;
+            }
+
+            currentSession = {
+                mode: 'practice',
+                section: section,
+                subcategory: subcategory,
+                questions: shuffleArray([...questions]),
+                currentIndex: 0,
+                answers: new Array(questions.length).fill(null),
+                startTime: Date.now(),
+                timeLimit: null,
+                timerInterval: null
+            };
+
+            document.getElementById('practiceBackBtn').onclick = () => showPage(section);
+            showPage('practice');
+            renderQuestion();
+        }
+
+        function startTest(testId) {
+            const test = testsDB.find(t => t.id === testId);
+            if (!test) return;
+
+            let questions = [];
+            
+            // Get verbal questions
+            const verbalQ = shuffleArray(questionsDB.filter(q => q.section === 'verbal'));
+            questions = questions.concat(verbalQ.slice(0, test.verbalCount));
+            
+            // Get quant questions
+            const quantQ = shuffleArray(questionsDB.filter(q => q.section === 'quant'));
+            questions = questions.concat(quantQ.slice(0, test.quantCount));
+
+            if (questions.length === 0) {
+                alert('لا توجد أسئلة كافية لهذا الاختبار');
+                return;
+            }
+
+            currentSession = {
+                mode: 'test',
+                section: 'mixed',
+                subcategory: null,
+                questions: shuffleArray(questions),
+                currentIndex: 0,
+                answers: new Array(questions.length).fill(null),
+                startTime: Date.now(),
+                timeLimit: test.timeLimit * 60 * 1000,
+                timerInterval: null,
+                testName: test.name
+            };
+
+            document.getElementById('practiceBackBtn').onclick = () => {
+                if (confirm('هل أنت متأكد من إنهاء الاختبار؟')) {
+                    finishPractice();
+                }
+            };
+
+            showPage('practice');
+            renderQuestion();
+            startTimer();
+        }
+
+        function renderQuestion() {
+            const q = currentSession.questions[currentSession.currentIndex];
+            const total = currentSession.questions.length;
+            const current = currentSession.currentIndex + 1;
+
+            // Update progress
+            document.getElementById('practiceProgress').style.width = 
+                `${(current / total) * 100}%`;
+
+            // Check if saved
+            const isSaved = userProgress.savedQuestions.includes(q.id);
+            const savedIcon = isSaved ? '🔖' : '☆';
+
+            // Difficulty label
+            const diffLabels = { easy: 'سهل', medium: 'متوسط', hard: 'صعب' };
+            const diffClass = `difficulty-${q.difficulty}`;
+
+            let html = `
+                <span class="saved-indicator" onclick="toggleSaveQuestion(${q.id})">${savedIcon}</span>
+                <div class="question-header">
+                    <span class="question-number">السؤال ${current} من ${total}</span>
+                    <span class="question-difficulty ${diffClass}">${diffLabels[q.difficulty]}</span>
+                </div>
+            `;
+
+            if (q.context) {
+                html += `<div class="question-context">${q.context}</div>`;
+            }
+
+            html += `<div class="question-text">${q.text}</div>`;
+
+            html += '<div class="options-list">';
+            const letters = ['أ', 'ب', 'ج', 'د'];
+            q.options.forEach((opt, i) => {
+                const selectedClass = currentSession.answers[currentSession.currentIndex] === i ? 'selected' : '';
+                html += `
+                    <div class="option ${selectedClass}" onclick="selectOption(${i})">
+                        <span class="option-letter">${letters[i]}</span>
+                        <span>${opt}</span>
+                    </div>
+                `;
+            });
+            html += '</div>';
+
+            document.getElementById('questionContainer').innerHTML = html;
+            document.getElementById('explanationBox').classList.remove('show');
+
+            // Update buttons
+            document.getElementById('prevBtn').style.display = current > 1 ? 'inline-flex' : 'none';
+            document.getElementById('nextBtn').style.display = current < total ? 'inline-flex' : 'none';
+            document.getElementById('finishBtn').style.display = current === total ? 'inline-flex' : 'none';
+        }
+
+        function selectOption(index) {
+            currentSession.answers[currentSession.currentIndex] = index;
+            
+            const q = currentSession.questions[currentSession.currentIndex];
+            const options = document.querySelectorAll('.option');
+            
+            options.forEach((opt, i) => {
+                opt.classList.remove('selected', 'correct', 'wrong');
+                if (currentSession.mode === 'practice') {
+                    if (i === q.correct) {
+                        opt.classList.add('correct');
+                    } else if (i === index && i !== q.correct) {
+                        opt.classList.add('wrong');
+                    }
+                } else if (i === index) {
+                    opt.classList.add('selected');
+                }
+            });
+
+            // Show explanation in practice mode
+            if (currentSession.mode === 'practice') {
+                document.getElementById('explanationText').textContent = q.explanation;
+                document.getElementById('explanationBox').classList.add('show');
+                
+                // Update progress
+                updateCategoryProgress(q.section, q.subcategory, index === q.correct);
+            }
+        }
+
+        function previousQuestion() {
+            if (currentSession.currentIndex > 0) {
+                currentSession.currentIndex--;
+                renderQuestion();
+            }
+        }
+
+        function nextQuestion() {
+            if (currentSession.currentIndex < currentSession.questions.length - 1) {
+                currentSession.currentIndex++;
+                renderQuestion();
+            }
+        }
+
+        function finishPractice() {
+            if (currentSession.timerInterval) {
+                clearInterval(currentSession.timerInterval);
+                document.getElementById('timerContainer').classList.remove('show');
+            }
+
+            const results = calculateResults();
+            saveResults(results);
+            renderResults(results);
+            showPage('results');
+        }
+
+        // ==================== Timer ====================
+        function startTimer() {
+            const container = document.getElementById('timerContainer');
+            const timerValue = document.getElementById('timerValue');
+            container.classList.add('show');
+
+            currentSession.timerInterval = setInterval(() => {
+                const elapsed = Date.now() - currentSession.startTime;
+                const remaining = currentSession.timeLimit - elapsed;
+
+                if (remaining <= 0) {
+                    clearInterval(currentSession.timerInterval);
+                    finishPractice();
+                    return;
+                }
+
+                const minutes = Math.floor(remaining / 60000);
+                const seconds = Math.floor((remaining % 60000) / 1000);
+                timerValue.textContent = `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+
+                timerValue.classList.remove('warning', 'danger');
+                if (remaining < 60000) {
+                    timerValue.classList.add('danger');
+                } else if (remaining < 300000) {
+                    timerValue.classList.add('warning');
+                }
+            }, 1000);
+        }
+
+        // ==================== Results ====================
+        function calculateResults() {
+            let correct = 0;
+            let wrong = 0;
+            let unanswered = 0;
+            const categoryStats = {};
+
+            currentSession.questions.forEach((q, i) => {
+                const key = `${q.section}_${q.subcategory}`;
+                if (!categoryStats[key]) {
+                    categoryStats[key] = { correct: 0, total: 0 };
+                }
+                categoryStats[key].total++;
+
+                if (currentSession.answers[i] === null) {
+                    unanswered++;
+                } else if (currentSession.answers[i] === q.correct) {
+                    correct++;
+                    categoryStats[key].correct++;
+                } else {
+                    wrong++;
+                }
+            });
+
+            const total = currentSession.questions.length;
+            const percentage = Math.round((correct / total) * 100);
+            const timeSpent = Date.now() - currentSession.startTime;
+
+            return {
+                correct,
+                wrong,
+                unanswered,
+                total,
+                percentage,
+                timeSpent,
+                categoryStats,
+                mode: currentSession.mode,
+                testName: currentSession.testName || null
+            };
+        }
+
+        function saveResults(results) {
+            userProgress.questionsAnswered += results.total;
+            userProgress.correctAnswers += results.correct;
+
+            if (results.mode === 'test') {
+                userProgress.testResults.push({
+                    date: new Date().toISOString(),
+                    name: results.testName,
+                    percentage: results.percentage,
+                    correct: results.correct,
+                    total: results.total,
+                    timeSpent: results.timeSpent
+                });
+            }
+
+            // Update daily stats
+            const today = new Date().toDateString();
+            if (!userProgress.dailyStats[today]) {
+                userProgress.dailyStats[today] = { questions: 0, correct: 0 };
+            }
+            userProgress.dailyStats[today].questions += results.total;
+            userProgress.dailyStats[today].correct += results.correct;
+
+            saveData();
+        }
+
+        function renderResults(results) {
+            let scoreClass = 'poor';
+            if (results.percentage >= 85) scoreClass = 'excellent';
+            else if (results.percentage >= 70) scoreClass = 'good';
+            else if (results.percentage >= 50) scoreClass = 'average';
+
+            const minutes = Math.floor(results.timeSpent / 60000);
+            const seconds = Math.floor((results.timeSpent % 60000) / 1000);
+
+            // Find strengths and weaknesses
+            const categories = Object.entries(results.categoryStats);
+            const strengths = categories
+                .filter(([_, s]) => s.correct / s.total >= 0.7)
+                .map(([k]) => getCategoryName(k));
+            const weaknesses = categories
+                .filter(([_, s]) => s.correct / s.total < 0.5)
+                .map(([k]) => getCategoryName(k));
+
+            let html = `
+                <h2 style="margin-bottom: 2rem;">🎉 نتيجة ${results.mode === 'test' ? 'الاختبار' : 'التدريب'}</h2>
+                
+                <div class="results-score ${scoreClass}">
+                    <span class="score-value">${results.percentage}%</span>
+                    <span class="score-label">نسبة النجاح</span>
+                </div>
+
+                <div class="results-details">
+                    <div class="result-stat correct">
+                        <span class="result-stat-value">${results.correct}</span>
+                        <span class="result-stat-label">إجابات صحيحة</span>
+                    </div>
+                    <div class="result-stat wrong">
+                        <span class="result-stat-value">${results.wrong}</span>
+                        <span class="result-stat-label">إجابات خاطئة</span>
+                    </div>
+                    <div class="result-stat time">
+                        <span class="result-stat-value">${minutes}:${String(seconds).padStart(2, '0')}</span>
+                        <span class="result-stat-label">الوقت المستغرق</span>
+                    </div>
+                </div>
+
+                <div class="strength-weakness" style="margin-top: 2rem;">
+                    <div class="sw-card strength">
+                        <h4>✅ نقاط القوة</h4>
+                        <ul class="sw-list">
+                            ${strengths.length > 0 ? strengths.map(s => `<li>⭐ ${s}</li>`).join('') : '<li>استمر في التدريب لتحسين أدائك</li>'}
+                        </ul>
+                    </div>
+                    <div class="sw-card weakness">
+                        <h4>⚠️ تحتاج تحسين</h4>
+                        <ul class="sw-list">
+                            ${weaknesses.length > 0 ? weaknesses.map(w => `<li>📝 ${w}</li>`).join('') : '<li>أداء ممتاز! استمر</li>'}
+                        </ul>
+                    </div>
+                </div>
+
+                <div style="margin-top: 2rem; display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap;">
+                    <button class="btn btn-primary" onclick="showPage('home')">العودة للرئيسية</button>
+                    <button class="btn btn-secondary" onclick="showPage('tests')">اختبار آخر</button>
+                </div>
+            `;
+
+            document.getElementById('resultsContainer').innerHTML = html;
+        }
+
+        function getCategoryName(key) {
+            const names = {
+                'verbal_analogy': 'التناظر اللفظي',
+                'verbal_completion': 'إكمال الجمل',
+                'verbal_reading': 'الاستيعاب المقروء',
+                'verbal_context': 'الخطأ السياقي',
+                'quant_ratio': 'النسب والتناسب',
+                'quant_algebra': 'الجبر والمعادلات',
+                'quant_statistics': 'الإحصاء',
+                'quant_geometry': 'الهندسة',
+                'quant_comparison': 'المقارنة'
+            };
+            return names[key] || key;
+        }
+
+        // ==================== Progress Tracking ====================
+        function updateCategoryProgress(section, subcategory, isCorrect) {
+            const key = `${section}_${subcategory}`;
+            if (!userProgress.categoryProgress[key]) {
+                userProgress.categoryProgress[key] = { attempted: 0, correct: 0 };
+            }
+            userProgress.categoryProgress[key].attempted++;
+            if (isCorrect) userProgress.categoryProgress[key].correct++;
+            saveData();
+        }
+
+        function updateStreak() {
+            const today = new Date().toDateString();
+            const yesterday = new Date(Date.now() - 86400000).toDateString();
+            
+            if (userProgress.lastActive === today) {
+                // Already active today
+            } else if (userProgress.lastActive === yesterday) {
+                userProgress.streak++;
+                userProgress.lastActive = today;
+            } else {
+                userProgress.streak = 1;
+                userProgress.lastActive = today;
+            }
+            
+            document.getElementById('streakCount').textContent = userProgress.streak;
+            saveData();
+        }
+
+        // ==================== Saved Questions ====================
+        function toggleSaveQuestion(qId) {
+            const index = userProgress.savedQuestions.indexOf(qId);
+            if (index > -1) {
+                userProgress.savedQuestions.splice(index, 1);
+            } else {
+                userProgress.savedQuestions.push(qId);
+            }
+            saveData();
+            renderQuestion();
+        }
+
+        function renderSavedQuestions() {
+            const container = document.getElementById('savedList');
+            const saved = questionsDB.filter(q => userProgress.savedQuestions.includes(q.id));
+
+            if (saved.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-state-icon">🔖</div>
+                        <p>لم تحفظ أي أسئلة بعد</p>
+                        <p style="font-size: 0.9rem;">اضغط على ☆ أثناء حل الأسئلة لحفظها هنا</p>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = saved.map(q => `
+                <div class="question-container" style="margin-bottom: 1rem;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                        <span class="question-difficulty difficulty-${q.difficulty}">
+                            ${q.difficulty === 'easy' ? 'سهل' : q.difficulty === 'medium' ? 'متوسط' : 'صعب'}
+                        </span>
+                        <button class="btn btn-sm btn-danger" onclick="removeSaved(${q.id})">إزالة</button>
+                    </div>
+                    <div class="question-text">${q.text}</div>
+                    <div class="explanation-box show" style="margin-top: 1rem;">
+                        <div class="explanation-title">💡 الإجابة والشرح</div>
+                        <p><strong>الإجابة:</strong> ${q.options[q.correct]}</p>
+                        <p style="margin-top: 0.5rem;">${q.explanation}</p>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function removeSaved(qId) {
+            userProgress.savedQuestions = userProgress.savedQuestions.filter(id => id !== qId);
+            saveData();
+            renderSavedQuestions();
+        }
+
+        // ==================== Tests ====================
+        function renderTests() {
+            const container = document.getElementById('testsList');
+            
+            container.innerHTML = testsDB.map(test => `
+                <div class="card" onclick="startTest(${test.id})">
+                    <div class="card-icon test">📝</div>
+                    <h3>${test.name}</h3>
+                    <p>${test.description}</p>
+                    <div class="card-meta">
+                        <span class="card-badge">${test.verbalCount + test.quantCount} سؤال</span>
+                        <span class="card-badge">⏱️ ${test.timeLimit} دقيقة</span>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // ==================== Solved Examples ====================
+        function renderSolvedExamples(filter = 'all') {
+            const container = document.getElementById('solvedList');
+            let questions = questionsDB.filter(q => q.explanation);
+            
+            if (filter !== 'all') {
+                questions = questions.filter(q => q.section === filter);
+            }
+
+            container.innerHTML = questions.slice(0, 10).map(q => `
+                <div class="question-container" style="margin-bottom: 1.5rem;">
+                    <div class="question-header">
+                        <span class="card-badge">${getCategoryName(q.section + '_' + q.subcategory)}</span>
+                        <span class="question-difficulty difficulty-${q.difficulty}">
+                            ${q.difficulty === 'easy' ? 'سهل' : q.difficulty === 'medium' ? 'متوسط' : 'صعب'}
+                        </span>
+                    </div>
+                    ${q.context ? `<div class="question-context">${q.context}</div>` : ''}
+                    <div class="question-text">${q.text}</div>
+                    <div class="options-list" style="margin: 1rem 0;">
+                        ${q.options.map((opt, i) => `
+                            <div class="option ${i === q.correct ? 'correct' : ''}">
+                                <span class="option-letter">${['أ', 'ب', 'ج', 'د'][i]}</span>
+                                <span>${opt}</span>
+                            </div>
+                        `).join('')}
+                    </div>
+                    <div class="explanation-box show">
+                        <div class="explanation-title">💡 الشرح التفصيلي</div>
+                        <p>${q.explanation}</p>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function filterSolved(filter) {
+            document.querySelectorAll('#page-solved .admin-tab').forEach(t => t.classList.remove('active'));
+            event.target.classList.add('active');
+            renderSolvedExamples(filter);
+        }
+
+        // ==================== Progress Dashboard ====================
+        function renderProgress() {
+            // Accuracy stats
+            const accuracy = userProgress.questionsAnswered > 0 
+                ? Math.round((userProgress.correctAnswers / userProgress.questionsAnswered) * 100) 
+                : 0;
+            
+            document.getElementById('accuracyStats').innerHTML = `
+                <div style="text-align: center; padding: 2rem;">
+                    <div style="font-size: 3rem; font-weight: 800; color: var(--primary);">${accuracy}%</div>
+                    <div style="color: var(--gray);">نسبة الإجابات الصحيحة</div>
+                </div>
+            `;
+
+            // Questions stats
+            document.getElementById('questionsStats').innerHTML = `
+                <div style="text-align: center; padding: 2rem;">
+                    <div style="font-size: 3rem; font-weight: 800; color: var(--primary);">${userProgress.questionsAnswered}</div>
+                    <div style="color: var(--gray);">سؤال تم حله</div>
+                </div>
+            `;
+
+            // Time stats
+            const totalTests = userProgress.testResults.length;
+            document.getElementById('timeStats').innerHTML = `
+                <div style="text-align: center; padding: 2rem;">
+                    <div style="font-size: 3rem; font-weight: 800; color: var(--primary);">${totalTests}</div>
+                    <div style="color: var(--gray);">اختبار مكتمل</div>
+                </div>
+            `;
+
+            // Performance chart
+            renderPerformanceChart();
+
+            // Strengths and weaknesses
+            const catProgress = Object.entries(userProgress.categoryProgress);
+            const strengths = catProgress
+                .filter(([_, s]) => s.attempted >= 3 && s.correct / s.attempted >= 0.7)
+                .map(([k]) => getCategoryName(k));
+            const weaknesses = catProgress
+                .filter(([_, s]) => s.attempted >= 3 && s.correct / s.attempted < 0.5)
+                .map(([k]) => getCategoryName(k));
+
+            document.getElementById('strengthsList').innerHTML = 
+                strengths.length > 0 
+                    ? strengths.map(s => `<li>⭐ ${s}</li>`).join('')
+                    : '<li>⭐ أكمل المزيد من التدريب لاكتشاف نقاط قوتك</li>';
+
+            document.getElementById('weaknessesList').innerHTML = 
+                weaknesses.length > 0 
+                    ? weaknesses.map(w => `<li>📝 ${w}</li>`).join('')
+                    : '<li>📝 أكمل المزيد من التدريب لاكتشاف ما تحتاج تحسينه</li>';
+
+            // Update home page score
+            document.getElementById('userScore').textContent = accuracy + '%';
+        }
+
+        function renderPerformanceChart() {
+            const container = document.getElementById('performanceChart');
+            const last7Days = [];
+            
+            for (let i = 6; i >= 0; i--) {
+                const date = new Date(Date.now() - i * 86400000).toDateString();
+                const stats = userProgress.dailyStats[date] || { questions: 0, correct: 0 };
+                last7Days.push(stats);
+            }
+
+            const maxQuestions = Math.max(...last7Days.map(d => d.questions), 1);
+            
+            container.innerHTML = last7Days.map((day, i) => {
+                const height = (day.questions / maxQuestions) * 100;
+                return `<div class="chart-bar" style="height: ${Math.max(height, 5)}%" data-value="${day.questions}"></div>`;
+            }).join('');
+        }
+
+        // ==================== Admin Panel ====================
+        function showAdminTab(tab) {
+            document.querySelectorAll('#page-admin .admin-tab').forEach(t => t.classList.remove('active'));
+            event.target.classList.add('active');
+            
+            document.getElementById('adminAdd').style.display = tab === 'add' ? 'block' : 'none';
+            document.getElementById('adminManage').style.display = tab === 'manage' ? 'block' : 'none';
+            document.getElementById('adminTests').style.display = tab === 'tests' ? 'block' : 'none';
+
+            if (tab === 'manage') renderQuestionsTable();
+            if (tab === 'tests') renderAdminTests();
+        }
+
+        function updateSubcategories() {
+            const section = document.getElementById('qSection').value;
+            const subcatSelect = document.getElementById('qSubcategory');
+            
+            const verbal = [
+                { value: 'analogy', text: 'التناظر اللفظي' },
+                { value: 'completion', text: 'إكمال الجمل' },
+                { value: 'reading', text: 'الاستيعاب المقروء' },
+                { value: 'context', text: 'الخطأ السياقي' }
+            ];
+            
+            const quant = [
+                { value: 'ratio', text: 'النسب والتناسب' },
+                { value: 'algebra', text: 'الجبر والمعادلات' },
+                { value: 'statistics', text: 'الإحصاء' },
+                { value: 'geometry', text: 'الهندسة' },
+                { value: 'comparison', text: 'المقارنة' }
+            ];
+
+            const options = section === 'verbal' ? verbal : quant;
+            subcatSelect.innerHTML = options.map(o => 
+                `<option value="${o.value}">${o.text}</option>`
+            ).join('');
+        }
+
+        function addQuestion() {
+            const newQ = {
+                id: Date.now(),
+                section: document.getElementById('qSection').value,
+                subcategory: document.getElementById('qSubcategory').value,
+                difficulty: document.getElementById('qDifficulty').value,
+                context: document.getElementById('qContext').value.trim() || null,
+                text: document.getElementById('qText').value.trim(),
+                options: [
+                    document.getElementById('optionA').value.trim(),
+                    document.getElementById('optionB').value.trim(),
+                    document.getElementById('optionC').value.trim(),
+                    document.getElementById('optionD').value.trim()
+                ],
+                correct: parseInt(document.getElementById('qCorrect').value),
+                explanation: document.getElementById('qExplanation').value.trim()
+            };
+
+            if (!newQ.text || newQ.options.some(o => !o)) {
+                alert('الرجاء ملء جميع الحقول المطلوبة');
+                return;
+            }
+
+            questionsDB.push(newQ);
+            saveData();
+            
+            // Clear form
+            document.getElementById('qContext').value = '';
+            document.getElementById('qText').value = '';
+            document.getElementById('optionA').value = '';
+            document.getElementById('optionB').value = '';
+            document.getElementById('optionC').value = '';
+            document.getElementById('optionD').value = '';
+            document.getElementById('qExplanation').value = '';
+
+            alert('تم إضافة السؤال بنجاح!');
+        }
+
+        function renderQuestionsTable() {
+            const section = document.getElementById('filterSection').value;
+            const difficulty = document.getElementById('filterDifficulty').value;
+            
+            let filtered = [...questionsDB];
+            if (section !== 'all') filtered = filtered.filter(q => q.section === section);
+            if (difficulty !== 'all') filtered = filtered.filter(q => q.difficulty === difficulty);
+
+            const tbody = document.getElementById('questionsTableBody');
+            tbody.innerHTML = filtered.map((q, i) => `
+                <tr>
+                    <td>${i + 1}</td>
+                    <td style="max-width: 300px; overflow: hidden; text-overflow: ellipsis;">${q.text}</td>
+                    <td>${q.section === 'verbal' ? 'لفظي' : 'كمي'}</td>
+                    <td><span class="question-difficulty difficulty-${q.difficulty}">${q.difficulty === 'easy' ? 'سهل' : q.difficulty === 'medium' ? 'متوسط' : 'صعب'}</span></td>
+                    <td>
+                        <div class="table-actions">
+                            <button class="action-btn edit" onclick="editQuestion(${q.id})">✏️</button>
+                            <button class="action-btn delete" onclick="deleteQuestion(${q.id})">🗑️</button>
+                        </div>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        function filterQuestions() {
+            renderQuestionsTable();
+        }
+
+        function deleteQuestion(qId) {
+            if (confirm('هل أنت متأكد من حذف هذا السؤال؟')) {
+                questionsDB = questionsDB.filter(q => q.id !== qId);
+                saveData();
+                renderQuestionsTable();
+            }
+        }
+
+        function editQuestion(qId) {
+            const q = questionsDB.find(q => q.id === qId);
+            if (!q) return;
+
+            document.getElementById('editModalContent').innerHTML = `
+                <div class="form-group">
+                    <label class="form-label">نص السؤال</label>
+                    <textarea class="form-textarea" id="editText">${q.text}</textarea>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">الخيارات</label>
+                    <input type="text" class="form-input" id="editOpt0" value="${q.options[0]}" style="margin-bottom: 0.5rem;">
+                    <input type="text" class="form-input" id="editOpt1" value="${q.options[1]}" style="margin-bottom: 0.5rem;">
+                    <input type="text" class="form-input" id="editOpt2" value="${q.options[2]}" style="margin-bottom: 0.5rem;">
+                    <input type="text" class="form-input" id="editOpt3" value="${q.options[3]}">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">الإجابة الصحيحة</label>
+                    <select class="form-select" id="editCorrect">
+                        <option value="0" ${q.correct === 0 ? 'selected' : ''}>أ</option>
+                        <option value="1" ${q.correct === 1 ? 'selected' : ''}>ب</option>
+                        <option value="2" ${q.correct === 2 ? 'selected' : ''}>ج</option>
+                        <option value="3" ${q.correct === 3 ? 'selected' : ''}>د</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">الشرح</label>
+                    <textarea class="form-textarea" id="editExplanation">${q.explanation}</textarea>
+                </div>
+                <button class="btn btn-success btn-block" onclick="saveEdit(${q.id})">حفظ التعديلات</button>
+            `;
+
+            document.getElementById('editModal').classList.add('show');
+        }
+
+        function saveEdit(qId) {
+            const q = questionsDB.find(q => q.id === qId);
+            if (!q) return;
+
+            q.text = document.getElementById('editText').value;
+            q.options = [
+                document.getElementById('editOpt0').value,
+                document.getElementById('editOpt1').value,
+                document.getElementById('editOpt2').value,
+                document.getElementById('editOpt3').value
+            ];
+            q.correct = parseInt(document.getElementById('editCorrect').value);
+            q.explanation = document.getElementById('editExplanation').value;
+
+            saveData();
+            closeEditModal();
+            renderQuestionsTable();
+        }
+
+        function closeEditModal() {
+            document.getElementById('editModal').classList.remove('show');
+        }
+
+        function createTest() {
+            const name = document.getElementById('testName').value.trim();
+            const verbalCount = parseInt(document.getElementById('testVerbalCount').value);
+            const quantCount = parseInt(document.getElementById('testQuantCount').value);
+            const timeLimit = parseInt(document.getElementById('testTime').value);
+
+            if (!name) {
+                alert('الرجاء إدخال اسم الاختبار');
+                return;
+            }
+
+            testsDB.push({
+                id: Date.now(),
+                name,
+                verbalCount,
+                quantCount,
+                timeLimit,
+                description: `${verbalCount + quantCount} سؤال في ${timeLimit} دقيقة`
+            });
+
+            saveData();
+            document.getElementById('testName').value = '';
+            renderAdminTests();
+            alert('تم إنشاء الاختبار بنجاح!');
+        }
+
+        function renderAdminTests() {
+            const container = document.getElementById('adminTestsList');
+            container.innerHTML = testsDB.map(test => `
+                <div style="display: flex; justify-content: space-between; align-items: center; padding: 1rem; background: var(--light); border-radius: 12px; margin-bottom: 0.5rem;">
+                    <div>
+                        <strong>${test.name}</strong>
+                        <span style="color: var(--gray); margin-right: 1rem;">(${test.verbalCount + test.quantCount} سؤال - ${test.timeLimit} دقيقة)</span>
+                    </div>
+                    <button class="btn btn-sm btn-danger" onclick="deleteTest(${test.id})">حذف</button>
+                </div>
+            `).join('');
+        }
+
+        function deleteTest(testId) {
+            if (confirm('هل أنت متأكد من حذف هذا الاختبار؟')) {
+                testsDB = testsDB.filter(t => t.id !== testId);
+                saveData();
+                renderAdminTests();
+            }
+        }
+
+        // ==================== Utilities ====================
+        function shuffleArray(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+            return array;
+        }
+
+        function updateUI() {
+            // Update progress on home page
+            const verbalProgress = calculateSectionProgress('verbal');
+            const quantProgress = calculateSectionProgress('quant');
+            
+            document.getElementById('verbalProgress').textContent = `${verbalProgress}% مكتمل`;
+            document.getElementById('quantProgress').textContent = `${quantProgress}% مكتمل`;
+        }
+
+        function calculateSectionProgress(section) {
+            const categories = Object.entries(userProgress.categoryProgress)
+                .filter(([k]) => k.startsWith(section));
+            
+            if (categories.length === 0) return 0;
+            
+            const avgProgress = categories.reduce((sum, [_, s]) => {
+                return sum + (s.attempted > 0 ? Math.min(s.attempted / 10, 1) : 0);
+            }, 0) / categories.length;
+            
+            return Math.round(avgProgress * 100);
+        }
+
+        // Close modal on outside click
+        document.getElementById('editModal').addEventListener('click', function(e) {
+            if (e.target === this) closeEditModal();
+        });
+
+        // Initialize app
+        init();
+    </script>
+</body>
+</html>
