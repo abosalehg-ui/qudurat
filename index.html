@@ -1097,11 +1097,305 @@
             margin-bottom: 1rem;
             opacity: 0.5;
         }
+
+        /* ==================== Font Size Scaling ==================== */
+        html { font-size: 16px; }
+        html[data-font-size="small"]  { font-size: 14px; }
+        html[data-font-size="medium"] { font-size: 16px; }
+        html[data-font-size="large"]  { font-size: 18px; }
+        html[data-font-size="xlarge"] { font-size: 20px; }
+
+        /* ==================== Theme Toggle UI ==================== */
+        .theme-controls {
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            z-index: 999;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .theme-btn {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            border: none;
+            background: var(--white);
+            box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+            cursor: pointer;
+            font-size: 1.3rem;
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .theme-btn:hover {
+            transform: scale(1.1);
+        }
+
+        .theme-btn:focus-visible {
+            outline: 3px solid var(--primary-light);
+            outline-offset: 2px;
+        }
+
+        /* Skip to content link (a11y) */
+        .skip-link {
+            position: absolute;
+            top: -100px;
+            right: 1rem;
+            background: var(--primary);
+            color: var(--white);
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            z-index: 10000;
+            text-decoration: none;
+            transition: top 0.2s;
+        }
+        .skip-link:focus {
+            top: 1rem;
+        }
+
+        /* Improved focus styles */
+        button:focus-visible,
+        a:focus-visible,
+        input:focus-visible,
+        select:focus-visible,
+        textarea:focus-visible {
+            outline: 3px solid var(--primary-light);
+            outline-offset: 2px;
+        }
+
+        /* ==================== Dark Mode ==================== */
+        [data-theme="dark"] {
+            --primary: #2c8eb3;
+            --primary-dark: #1a5f7a;
+            --primary-light: #4dabd9;
+            --dark: #e8eaed;
+            --light: #2f3344;
+            --gray: #9aa0a6;
+            --card-shadow: 0 10px 40px rgba(0, 0, 0, 0.4);
+        }
+
+        [data-theme="dark"] body {
+            background: linear-gradient(135deg, #14171f 0%, #1c2030 100%);
+            color: #e8eaed;
+        }
+
+        [data-theme="dark"] .card,
+        [data-theme="dark"] .sub-cat-card,
+        [data-theme="dark"] .question-container,
+        [data-theme="dark"] .results-container,
+        [data-theme="dark"] .analysis-section,
+        [data-theme="dark"] .admin-form,
+        [data-theme="dark"] .stat-card,
+        [data-theme="dark"] .modal-content,
+        [data-theme="dark"] .progress-overview {
+            background: #252837;
+            color: #e8eaed;
+        }
+
+        [data-theme="dark"] .card h3,
+        [data-theme="dark"] .section-title,
+        [data-theme="dark"] .stat-value,
+        [data-theme="dark"] .form-label {
+            color: #e8eaed;
+        }
+
+        [data-theme="dark"] .card p,
+        [data-theme="dark"] .stat-label {
+            color: #b0b3b8;
+        }
+
+        [data-theme="dark"] .card-badge {
+            background: #353846;
+            color: #e8eaed;
+        }
+
+        [data-theme="dark"] .theme-btn {
+            background: #252837;
+            color: #e8eaed;
+        }
+
+        [data-theme="dark"] .form-input,
+        [data-theme="dark"] .form-select,
+        [data-theme="dark"] .form-textarea {
+            background: #1c2030;
+            color: #e8eaed;
+            border-color: #3a3f50;
+        }
+
+        [data-theme="dark"] .questions-table {
+            background: #252837;
+            color: #e8eaed;
+        }
+
+        [data-theme="dark"] .questions-table thead {
+            background: #1c2030;
+        }
+
+        [data-theme="dark"] .questions-table tr {
+            border-color: #3a3f50;
+        }
+
+        [data-theme="dark"] .footer {
+            background: #14171f;
+        }
+
+        [data-theme="dark"] .btn-secondary {
+            background: #353846;
+            color: #e8eaed;
+        }
+
+        [data-theme="dark"] .option {
+            background: #1c2030;
+            color: #e8eaed;
+            border-color: #3a3f50;
+        }
+
+        [data-theme="dark"] .option:hover {
+            background: #2f3344;
+        }
+
+        /* ==================== Toast Animations ==================== */
+        @keyframes toastIn {
+            from { opacity: 0; transform: translateY(-20px) scale(0.9); }
+            to { opacity: 1; transform: translateY(0) scale(1); }
+        }
+        @keyframes toastOut {
+            from { opacity: 1; transform: translateY(0) scale(1); }
+            to { opacity: 0; transform: translateY(-20px) scale(0.9); }
+        }
+
+        /* ==================== Gamification Styles ==================== */
+        .badge-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .badge-item {
+            background: var(--white);
+            border-radius: 16px;
+            padding: 1.25rem 0.75rem;
+            text-align: center;
+            box-shadow: var(--card-shadow);
+            transition: var(--transition);
+            position: relative;
+        }
+
+        [data-theme="dark"] .badge-item { background: #252837; }
+
+        .badge-item.locked {
+            opacity: 0.4;
+            filter: grayscale(80%);
+        }
+
+        .badge-item.unlocked:hover {
+            transform: translateY(-4px) scale(1.03);
+        }
+
+        .badge-icon {
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .badge-name {
+            font-weight: 700;
+            font-size: 0.9rem;
+            color: var(--dark);
+            margin-bottom: 0.25rem;
+        }
+
+        .badge-desc {
+            font-size: 0.75rem;
+            color: var(--gray);
+        }
+
+        .level-bar {
+            background: var(--light);
+            border-radius: 20px;
+            height: 24px;
+            overflow: hidden;
+            margin: 0.5rem 0;
+            position: relative;
+        }
+
+        .level-bar-fill {
+            background: linear-gradient(90deg, var(--secondary), var(--secondary-light));
+            height: 100%;
+            transition: width 0.6s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--white);
+            font-weight: 700;
+            font-size: 0.85rem;
+        }
+
+        .level-display {
+            background: linear-gradient(135deg, var(--secondary), var(--secondary-light));
+            color: var(--white);
+            padding: 1.5rem;
+            border-radius: 20px;
+            margin-bottom: 1.5rem;
+            box-shadow: var(--card-shadow);
+        }
+
+        .daily-challenge-card {
+            background: linear-gradient(135deg, #e74c3c, #c0392b);
+            color: var(--white);
+            padding: 2rem;
+            border-radius: 20px;
+            margin-bottom: 1.5rem;
+            cursor: pointer;
+            transition: var(--transition);
+            box-shadow: var(--card-shadow);
+        }
+
+        .daily-challenge-card:hover {
+            transform: translateY(-4px);
+        }
+
+        .daily-challenge-card.completed {
+            background: linear-gradient(135deg, var(--success), #229954);
+            cursor: default;
+        }
+
+        /* ==================== Print Styles (for PDF export) ==================== */
+        @media print {
+            .navbar, .footer, .theme-controls, .timer-container,
+            .back-btn, .btn, .mobile-menu-btn { display: none !important; }
+            body { background: white !important; color: black !important; }
+            .container { padding: 0 !important; }
+            .card, .results-container, .analysis-section {
+                box-shadow: none !important;
+                border: 1px solid #ddd !important;
+                page-break-inside: avoid;
+            }
+        }
     </style>
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#1a5f7a">
+    <link rel="icon" type="image/svg+xml" href="icon.svg">
+    <link rel="apple-touch-icon" href="icon.svg">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="قدراتي">
 </head>
 <body>
+    <a href="#main-content" class="skip-link">تخطي إلى المحتوى الرئيسي</a>
+
+    <!-- Theme & Accessibility Controls -->
+    <div class="theme-controls" role="region" aria-label="إعدادات العرض">
+        <button class="theme-btn" id="themeToggle" onclick="toggleTheme()" aria-label="تبديل الوضع الليلي" title="تبديل الوضع الليلي">🌙</button>
+        <button class="theme-btn" onclick="cycleFontSize()" aria-label="تكبير حجم الخط" title="تكبير/تصغير الخط">🔤</button>
+    </div>
+
     <!-- Navigation -->
-    <nav class="navbar">
+    <nav class="navbar" role="navigation" aria-label="القائمة الرئيسية">
         <div class="nav-container">
             <a href="#" class="logo" onclick="showPage('home')">
                 <div class="logo-icon">📚</div>
@@ -1137,7 +1431,7 @@
     </div>
 
     <!-- Main Content -->
-    <main class="main-content">
+    <main class="main-content" id="main-content" role="main">
         
         <!-- Home Page -->
         <div class="page active" id="page-home">
@@ -1164,6 +1458,9 @@
                     </div>
                 </div>
             </div>
+
+            <!-- Daily Challenge -->
+            <div class="daily-challenge-card" id="dailyChallengeCard" role="region" aria-label="تحدي اليوم"></div>
 
             <div class="section-header">
                 <h2 class="section-title"><span>📂</span> الأقسام الرئيسية</h2>
@@ -1389,9 +1686,22 @@
         <!-- Progress Page -->
         <div class="page" id="page-progress">
             <span class="back-btn" onclick="showPage('home')">→ العودة للرئيسية</span>
-            
-            <div class="section-header">
+
+            <div class="section-header" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:1rem;">
                 <h2 class="section-title"><span>📊</span> تقدمي وإحصائياتي</h2>
+                <button class="btn btn-primary" onclick="exportProgressReport()" aria-label="تصدير تقرير التقدم كملف PDF">📄 تصدير PDF</button>
+            </div>
+
+            <!-- Level & Points -->
+            <div class="level-display" id="levelDisplay" role="region" aria-label="المستوى والنقاط"></div>
+
+            <!-- Badges -->
+            <div class="analysis-section" style="margin-bottom:1.5rem;">
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;flex-wrap:wrap;gap:0.5rem;">
+                    <h3>🏆 الشارات</h3>
+                    <span class="card-badge" id="badgesCount">0 / 0</span>
+                </div>
+                <div class="badge-grid" id="badgesContainer" role="list" aria-label="قائمة الشارات"></div>
             </div>
 
             <div class="dashboard-grid">
@@ -1456,6 +1766,7 @@
                 <button class="admin-tab active" onclick="showAdminTab('add')">إضافة سؤال</button>
                 <button class="admin-tab" onclick="showAdminTab('manage')">إدارة الأسئلة</button>
                 <button class="admin-tab" onclick="showAdminTab('tests')">إدارة الاختبارات</button>
+                <button class="admin-tab" onclick="showAdminTab('tools')">أدوات</button>
             </div>
 
             <!-- Add Question Form -->
@@ -1602,6 +1913,49 @@
                     <!-- Tests will be loaded here -->
                 </div>
             </div>
+
+            <!-- Tools: Backup / CSV -->
+            <div class="admin-form" id="adminTools" style="display: none;">
+                <h3 style="margin-bottom: 1.5rem;">🛠️ الأدوات</h3>
+
+                <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:1rem;margin-bottom:2rem;">
+                    <div style="padding:1.5rem;background:var(--light);border-radius:12px;">
+                        <h4 style="margin-bottom:0.75rem;">💾 نسخة احتياطية</h4>
+                        <p style="color:var(--gray);font-size:0.9rem;margin-bottom:1rem;">تصدير كامل البيانات (أسئلة، اختبارات، تقدم) كملف JSON</p>
+                        <button class="btn btn-primary btn-block" onclick="exportAllData()">⬇️ تصدير نسخة احتياطية</button>
+                    </div>
+
+                    <div style="padding:1.5rem;background:var(--light);border-radius:12px;">
+                        <h4 style="margin-bottom:0.75rem;">📂 استعادة البيانات</h4>
+                        <p style="color:var(--gray);font-size:0.9rem;margin-bottom:1rem;">استعادة من ملف JSON سابق (سيستبدل البيانات الحالية)</p>
+                        <label class="btn btn-success btn-block" style="cursor:pointer;text-align:center;">
+                            ⬆️ اختر ملف JSON
+                            <input type="file" accept=".json" onchange="importAllData(this)" style="display:none;">
+                        </label>
+                    </div>
+
+                    <div style="padding:1.5rem;background:var(--light);border-radius:12px;">
+                        <h4 style="margin-bottom:0.75rem;">📊 تصدير الأسئلة CSV</h4>
+                        <p style="color:var(--gray);font-size:0.9rem;margin-bottom:1rem;">تنزيل جميع الأسئلة في ملف Excel/CSV</p>
+                        <button class="btn btn-primary btn-block" onclick="exportQuestionsCSV()">⬇️ تصدير CSV</button>
+                    </div>
+
+                    <div style="padding:1.5rem;background:var(--light);border-radius:12px;">
+                        <h4 style="margin-bottom:0.75rem;">📥 استيراد أسئلة CSV</h4>
+                        <p style="color:var(--gray);font-size:0.9rem;margin-bottom:1rem;">إضافة أسئلة دفعة واحدة من ملف CSV</p>
+                        <label class="btn btn-success btn-block" style="cursor:pointer;text-align:center;">
+                            ⬆️ اختر ملف CSV
+                            <input type="file" accept=".csv" onchange="importQuestionsCSV(this)" style="display:none;">
+                        </label>
+                    </div>
+                </div>
+
+                <div style="padding:1rem;background:rgba(243, 156, 18, 0.1);border-right:4px solid var(--warning);border-radius:8px;">
+                    <strong>تنسيق ملف CSV المطلوب:</strong><br>
+                    <code style="font-size:0.85rem;">id, section, subcategory, difficulty, text, optionA, optionB, optionC, optionD, correct, explanation</code><br>
+                    <small style="color:var(--gray);">section: verbal أو quant • difficulty: easy/medium/hard • correct: 0-3</small>
+                </div>
+            </div>
         </div>
 
     </main>
@@ -1662,8 +2016,87 @@
             timerInterval: null
         };
 
+        // ==================== Theme & Accessibility ====================
+        function applyTheme(theme) {
+            document.documentElement.setAttribute('data-theme', theme);
+            const btn = document.getElementById('themeToggle');
+            if (btn) {
+                btn.textContent = theme === 'dark' ? '☀️' : '🌙';
+                btn.setAttribute('aria-label', theme === 'dark' ? 'تفعيل الوضع النهاري' : 'تفعيل الوضع الليلي');
+            }
+            localStorage.setItem('qudurat_theme', theme);
+        }
+
+        function toggleTheme() {
+            const current = document.documentElement.getAttribute('data-theme') || 'light';
+            applyTheme(current === 'dark' ? 'light' : 'dark');
+        }
+
+        const FONT_SIZES = ['small', 'medium', 'large', 'xlarge'];
+        const FONT_SIZE_LABELS = { small: 'صغير', medium: 'متوسط', large: 'كبير', xlarge: 'كبير جداً' };
+
+        function applyFontSize(size) {
+            document.documentElement.setAttribute('data-font-size', size);
+            localStorage.setItem('qudurat_font_size', size);
+        }
+
+        function cycleFontSize() {
+            const current = document.documentElement.getAttribute('data-font-size') || 'medium';
+            const idx = FONT_SIZES.indexOf(current);
+            const next = FONT_SIZES[(idx + 1) % FONT_SIZES.length];
+            applyFontSize(next);
+            showToast(`حجم الخط: ${FONT_SIZE_LABELS[next]}`);
+        }
+
+        function loadPreferences() {
+            const savedTheme = localStorage.getItem('qudurat_theme');
+            if (savedTheme) {
+                applyTheme(savedTheme);
+            } else if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+                applyTheme('dark');
+            } else {
+                applyTheme('light');
+            }
+
+            const savedSize = localStorage.getItem('qudurat_font_size');
+            if (savedSize) applyFontSize(savedSize);
+            else applyFontSize('medium');
+        }
+
+        // ==================== Toast Notifications ====================
+        function showToast(message, type = 'info', duration = 3000) {
+            const existing = document.getElementById('toastContainer');
+            const container = existing || (() => {
+                const c = document.createElement('div');
+                c.id = 'toastContainer';
+                c.style.cssText = 'position:fixed;top:80px;left:50%;transform:translateX(-50%);z-index:10000;display:flex;flex-direction:column;gap:0.5rem;pointer-events:none;';
+                c.setAttribute('aria-live', 'polite');
+                c.setAttribute('aria-atomic', 'true');
+                document.body.appendChild(c);
+                return c;
+            })();
+
+            const colors = {
+                info: 'var(--primary)',
+                success: 'var(--success)',
+                error: 'var(--danger)',
+                warning: 'var(--warning)'
+            };
+
+            const toast = document.createElement('div');
+            toast.style.cssText = `background:${colors[type] || colors.info};color:#fff;padding:0.75rem 1.5rem;border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,0.2);font-weight:600;animation:toastIn 0.3s ease;pointer-events:auto;`;
+            toast.textContent = message;
+            container.appendChild(toast);
+
+            setTimeout(() => {
+                toast.style.animation = 'toastOut 0.3s ease forwards';
+                setTimeout(() => toast.remove(), 300);
+            }, duration);
+        }
+
         // ==================== Initialization ====================
         function init() {
+            loadPreferences();
             loadData();
             loadSampleData();
             updateUI();
@@ -1673,6 +2106,8 @@
             renderSavedQuestions();
             renderProgress();
             renderQuestionsTable();
+            registerServiceWorker();
+            checkDailyChallenge();
         }
 
         function loadData() {
@@ -9655,6 +10090,8 @@
             userProgress.questionsAnswered += results.total;
             userProgress.correctAnswers += results.correct;
 
+            awardPoints(results.correct * POINTS_PER_CORRECT);
+
             if (results.mode === 'test') {
                 userProgress.testResults.push({
                     date: new Date().toISOString(),
@@ -9666,6 +10103,10 @@
                 });
             }
 
+            if (results.mode === 'daily') {
+                completeDailyChallenge(results.correct);
+            }
+
             // Update daily stats
             const today = new Date().toDateString();
             if (!userProgress.dailyStats[today]) {
@@ -9675,6 +10116,7 @@
             userProgress.dailyStats[today].correct += results.correct;
 
             saveData();
+            checkAndAwardBadges();
         }
 
         function renderResults(results) {
@@ -9736,6 +10178,7 @@
                 <div style="margin-top: 2rem; display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap;">
                     <button class="btn btn-primary" onclick="showPage('home')">العودة للرئيسية</button>
                     <button class="btn btn-secondary" onclick="showPage('tests')">اختبار آخر</button>
+                    <button class="btn btn-secondary" onclick="exportTestResultsAsPDF()" aria-label="طباعة النتيجة أو حفظها كـ PDF">🖨️ طباعة / PDF</button>
                 </div>
             `;
 
@@ -9897,9 +10340,12 @@
 
         // ==================== Progress Dashboard ====================
         function renderProgress() {
+            renderLevelDisplay();
+            renderBadges();
+
             // Accuracy stats
-            const accuracy = userProgress.questionsAnswered > 0 
-                ? Math.round((userProgress.correctAnswers / userProgress.questionsAnswered) * 100) 
+            const accuracy = userProgress.questionsAnswered > 0
+                ? Math.round((userProgress.correctAnswers / userProgress.questionsAnswered) * 100)
                 : 0;
             
             document.getElementById('accuracyStats').innerHTML = `
@@ -9974,10 +10420,12 @@
         function showAdminTab(tab) {
             document.querySelectorAll('#page-admin .admin-tab').forEach(t => t.classList.remove('active'));
             event.target.classList.add('active');
-            
+
             document.getElementById('adminAdd').style.display = tab === 'add' ? 'block' : 'none';
             document.getElementById('adminManage').style.display = tab === 'manage' ? 'block' : 'none';
             document.getElementById('adminTests').style.display = tab === 'tests' ? 'block' : 'none';
+            const toolsEl = document.getElementById('adminTools');
+            if (toolsEl) toolsEl.style.display = tab === 'tools' ? 'block' : 'none';
 
             if (tab === 'manage') renderQuestionsTable();
             if (tab === 'tests') renderAdminTests();
@@ -10253,6 +10701,383 @@
                 testsDB = testsDB.filter(t => t.id !== testId);
                 saveData();
                 renderAdminTests();
+            }
+        }
+
+        // ==================== Gamification: Points, Levels, Badges ====================
+        const POINTS_PER_CORRECT = 10;
+        const POINTS_PER_LEVEL = 100;
+
+        const BADGES = [
+            { id: 'first_q',     icon: '🎯', name: 'البداية',         desc: 'أجب على أول سؤال',                check: p => p.questionsAnswered >= 1 },
+            { id: 'q10',         icon: '🌱', name: 'مبتدئ',           desc: 'أجب على 10 أسئلة',                check: p => p.questionsAnswered >= 10 },
+            { id: 'q50',         icon: '📚', name: 'مثابر',            desc: 'أجب على 50 سؤالاً',                check: p => p.questionsAnswered >= 50 },
+            { id: 'q100',        icon: '🎓', name: 'متفوق',            desc: 'أجب على 100 سؤال',                 check: p => p.questionsAnswered >= 100 },
+            { id: 'q500',        icon: '🏆', name: 'خبير',             desc: 'أجب على 500 سؤال',                 check: p => p.questionsAnswered >= 500 },
+            { id: 'streak3',     icon: '🔥', name: 'متحمس',            desc: 'حافظ على Streak 3 أيام',           check: p => (p.streak || 0) >= 3 },
+            { id: 'streak7',     icon: '⚡', name: 'أسبوع كامل',        desc: 'حافظ على Streak 7 أيام',           check: p => (p.streak || 0) >= 7 },
+            { id: 'streak30',    icon: '💎', name: 'لا يُهزم',          desc: 'حافظ على Streak 30 يوماً',          check: p => (p.streak || 0) >= 30 },
+            { id: 'accuracy80',  icon: '🎖️', name: 'دقيق',             desc: 'حقق 80% دقة (50+ سؤال)',           check: p => p.questionsAnswered >= 50 && (p.correctAnswers / p.questionsAnswered) >= 0.8 },
+            { id: 'firstTest',   icon: '📝', name: 'مختبر',             desc: 'أكمل اختباراً واحداً',              check: p => (p.testResults || []).length >= 1 },
+            { id: 'test10',      icon: '🏅', name: 'بطل الاختبارات',    desc: 'أكمل 10 اختبارات',                  check: p => (p.testResults || []).length >= 10 },
+            { id: 'daily7',      icon: '📅', name: 'منتظم',             desc: 'أكمل تحدي يومي 7 مرات',             check: p => (p.dailyChallengesCompleted || 0) >= 7 },
+            { id: 'verbal100',   icon: '🗣️', name: 'لغوي',              desc: 'أجب 100 سؤال لفظي',                check: p => sumCategoryAttempts(p, 'verbal') >= 100 },
+            { id: 'quant100',    icon: '🧮', name: 'حاسب',              desc: 'أجب 100 سؤال كمي',                 check: p => sumCategoryAttempts(p, 'quant') >= 100 },
+            { id: 'level5',      icon: '⭐', name: 'المستوى 5',          desc: 'وصلت إلى المستوى 5',                check: p => getLevel(p.points || 0) >= 5 },
+            { id: 'level10',     icon: '🌟', name: 'المستوى 10',         desc: 'وصلت إلى المستوى 10',               check: p => getLevel(p.points || 0) >= 10 }
+        ];
+
+        function sumCategoryAttempts(p, section) {
+            return Object.entries(p.categoryProgress || {})
+                .filter(([k]) => k.startsWith(section))
+                .reduce((sum, [, v]) => sum + (v.attempted || 0), 0);
+        }
+
+        function getLevel(points) {
+            return Math.floor(points / POINTS_PER_LEVEL) + 1;
+        }
+
+        function getLevelProgress(points) {
+            const inLevel = points % POINTS_PER_LEVEL;
+            return Math.round((inLevel / POINTS_PER_LEVEL) * 100);
+        }
+
+        function awardPoints(amount) {
+            const prevLevel = getLevel(userProgress.points || 0);
+            userProgress.points = (userProgress.points || 0) + amount;
+            const newLevel = getLevel(userProgress.points);
+            if (newLevel > prevLevel) {
+                showToast(`🎉 ترقية! وصلت إلى المستوى ${newLevel}`, 'success', 4000);
+            }
+        }
+
+        function checkAndAwardBadges() {
+            userProgress.badges = userProgress.badges || [];
+            BADGES.forEach(badge => {
+                if (!userProgress.badges.includes(badge.id) && badge.check(userProgress)) {
+                    userProgress.badges.push(badge.id);
+                    showToast(`${badge.icon} شارة جديدة: ${badge.name}`, 'success', 4000);
+                }
+            });
+            saveData();
+        }
+
+        function renderBadges() {
+            const container = document.getElementById('badgesContainer');
+            if (!container) return;
+            const earned = userProgress.badges || [];
+            container.innerHTML = BADGES.map(b => `
+                <div class="badge-item ${earned.includes(b.id) ? 'unlocked' : 'locked'}" title="${escapeAttr(b.desc)}">
+                    <div class="badge-icon" aria-hidden="true">${b.icon}</div>
+                    <div class="badge-name">${b.name}</div>
+                    <div class="badge-desc">${b.desc}</div>
+                </div>
+            `).join('');
+            const countEl = document.getElementById('badgesCount');
+            if (countEl) countEl.textContent = `${earned.length} / ${BADGES.length}`;
+        }
+
+        function renderLevelDisplay() {
+            const container = document.getElementById('levelDisplay');
+            if (!container) return;
+            const points = userProgress.points || 0;
+            const level = getLevel(points);
+            const progress = getLevelProgress(points);
+            const inLevel = points % POINTS_PER_LEVEL;
+            container.innerHTML = `
+                <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:1rem;">
+                    <div>
+                        <div style="font-size:0.9rem;opacity:0.9;">المستوى الحالي</div>
+                        <div style="font-size:2rem;font-weight:800;">⭐ ${level}</div>
+                    </div>
+                    <div style="font-size:1.5rem;font-weight:700;">${points} نقطة</div>
+                </div>
+                <div class="level-bar" role="progressbar" aria-valuenow="${progress}" aria-valuemin="0" aria-valuemax="100">
+                    <div class="level-bar-fill" style="width:${progress}%;">${inLevel} / ${POINTS_PER_LEVEL}</div>
+                </div>
+            `;
+        }
+
+        // ==================== Daily Challenge ====================
+        function getTodayKey() {
+            return new Date().toISOString().slice(0, 10);
+        }
+
+        function checkDailyChallenge() {
+            const today = getTodayKey();
+            userProgress.dailyChallenge = userProgress.dailyChallenge || {};
+            if (userProgress.dailyChallenge.date !== today) {
+                userProgress.dailyChallenge = {
+                    date: today,
+                    completed: false,
+                    correct: 0,
+                    total: 5
+                };
+                saveData();
+            }
+            renderDailyChallenge();
+        }
+
+        function renderDailyChallenge() {
+            const card = document.getElementById('dailyChallengeCard');
+            if (!card) return;
+            const dc = userProgress.dailyChallenge || {};
+            if (dc.completed) {
+                card.classList.add('completed');
+                card.innerHTML = `
+                    <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:1rem;">
+                        <div>
+                            <div style="font-size:1.4rem;font-weight:800;margin-bottom:0.25rem;">✓ تم إنجاز تحدي اليوم</div>
+                            <div style="opacity:0.9;">عدت غداً لتحدٍ جديد</div>
+                        </div>
+                        <div style="font-size:2.5rem;">🎉</div>
+                    </div>
+                `;
+            } else {
+                card.classList.remove('completed');
+                card.innerHTML = `
+                    <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:1rem;">
+                        <div>
+                            <div style="font-size:1.4rem;font-weight:800;margin-bottom:0.25rem;">🔥 تحدي اليوم</div>
+                            <div style="opacity:0.9;">5 أسئلة - مكافأة 50 نقطة عند الإكمال</div>
+                        </div>
+                        <button class="btn" style="background:rgba(255,255,255,0.25);color:#fff;backdrop-filter:blur(10px);" onclick="event.stopPropagation();startDailyChallenge()">ابدأ الآن</button>
+                    </div>
+                `;
+            }
+        }
+
+        function startDailyChallenge() {
+            const pool = shuffleArray([...questionsDB]).slice(0, 5);
+            if (pool.length < 5) {
+                showToast('لا توجد أسئلة كافية', 'warning');
+                return;
+            }
+            currentSession = {
+                mode: 'daily',
+                section: 'mixed',
+                subcategory: null,
+                questions: pool,
+                currentIndex: 0,
+                answers: new Array(5).fill(null),
+                startTime: Date.now(),
+                timeLimit: null,
+                timerInterval: null
+            };
+            document.getElementById('practiceBackBtn').onclick = () => showPage('home');
+            showPage('practice');
+            renderQuestion();
+        }
+
+        function completeDailyChallenge(correctCount) {
+            userProgress.dailyChallenge.completed = true;
+            userProgress.dailyChallenge.correct = correctCount;
+            userProgress.dailyChallengesCompleted = (userProgress.dailyChallengesCompleted || 0) + 1;
+            awardPoints(50);
+            showToast('🎉 أحسنت! +50 نقطة مكافأة', 'success', 4000);
+            saveData();
+            checkAndAwardBadges();
+            renderDailyChallenge();
+        }
+
+        // ==================== PDF Export (via print) ====================
+        function exportTestResultsAsPDF() {
+            window.print();
+        }
+
+        function exportProgressReport() {
+            const points = userProgress.points || 0;
+            const level = getLevel(points);
+            const accuracy = userProgress.questionsAnswered > 0
+                ? Math.round((userProgress.correctAnswers / userProgress.questionsAnswered) * 100)
+                : 0;
+            const earnedBadges = (userProgress.badges || []).map(id => BADGES.find(b => b.id === id)).filter(Boolean);
+
+            const reportWindow = window.open('', '_blank');
+            reportWindow.document.write(`
+                <!DOCTYPE html>
+                <html lang="ar" dir="rtl">
+                <head>
+                    <meta charset="UTF-8">
+                    <title>تقرير التقدم - قدراتي</title>
+                    <style>
+                        body { font-family: 'Tahoma', sans-serif; padding: 2rem; max-width: 800px; margin: 0 auto; }
+                        h1 { color: #1a5f7a; border-bottom: 3px solid #1a5f7a; padding-bottom: 0.5rem; }
+                        .stat { display: flex; justify-content: space-between; padding: 0.75rem; background: #f5f7fa; margin-bottom: 0.5rem; border-radius: 8px; }
+                        .badge { display: inline-block; padding: 0.5rem 1rem; background: #ecf0f1; border-radius: 20px; margin: 0.25rem; font-size: 0.9rem; }
+                        @media print { .no-print { display: none; } }
+                    </style>
+                </head>
+                <body>
+                    <h1>📊 تقرير التقدم - قدراتي</h1>
+                    <p>التاريخ: ${new Date().toLocaleDateString('ar-SA')}</p>
+                    <h2>الإحصائيات</h2>
+                    <div class="stat"><span>المستوى</span><strong>⭐ ${level}</strong></div>
+                    <div class="stat"><span>النقاط</span><strong>${points}</strong></div>
+                    <div class="stat"><span>الأسئلة المُجابة</span><strong>${userProgress.questionsAnswered || 0}</strong></div>
+                    <div class="stat"><span>الإجابات الصحيحة</span><strong>${userProgress.correctAnswers || 0}</strong></div>
+                    <div class="stat"><span>نسبة الدقة</span><strong>${accuracy}%</strong></div>
+                    <div class="stat"><span>أيام متتالية (Streak)</span><strong>🔥 ${userProgress.streak || 0}</strong></div>
+                    <div class="stat"><span>الاختبارات المُكتملة</span><strong>${(userProgress.testResults || []).length}</strong></div>
+                    <div class="stat"><span>الشارات المُحصّلة</span><strong>${earnedBadges.length} / ${BADGES.length}</strong></div>
+                    <h2>الشارات</h2>
+                    ${earnedBadges.map(b => `<span class="badge">${b.icon} ${b.name}</span>`).join('')}
+                    <div class="no-print" style="margin-top:2rem;text-align:center;">
+                        <button onclick="window.print()" style="padding:0.75rem 1.5rem;background:#1a5f7a;color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:1rem;">🖨️ طباعة / حفظ PDF</button>
+                    </div>
+                </body>
+                </html>
+            `);
+            reportWindow.document.close();
+        }
+
+        // ==================== Admin: Backup / Restore / CSV ====================
+        function exportAllData() {
+            const blob = new Blob([JSON.stringify({
+                questions: questionsDB,
+                tests: testsDB,
+                progress: userProgress,
+                exportedAt: new Date().toISOString(),
+                version: '1.0'
+            }, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `qudurat-backup-${getTodayKey()}.json`;
+            a.click();
+            URL.revokeObjectURL(url);
+            showToast('✓ تم تصدير النسخة الاحتياطية', 'success');
+        }
+
+        function importAllData(input) {
+            const file = input.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                try {
+                    const data = JSON.parse(e.target.result);
+                    if (!confirm('سيتم استبدال جميع البيانات الحالية. هل أنت متأكد؟')) return;
+                    if (data.questions) questionsDB = data.questions;
+                    if (data.tests) testsDB = data.tests;
+                    if (data.progress) userProgress = { ...userProgress, ...data.progress };
+                    saveData();
+                    renderQuestionsTable();
+                    renderAdminTests();
+                    renderTests();
+                    showToast('✓ تم استعادة البيانات بنجاح', 'success');
+                } catch (err) {
+                    showToast('❌ ملف غير صالح', 'error');
+                }
+                input.value = '';
+            };
+            reader.readAsText(file);
+        }
+
+        function exportQuestionsCSV() {
+            const headers = ['id', 'section', 'subcategory', 'difficulty', 'text', 'optionA', 'optionB', 'optionC', 'optionD', 'correct', 'explanation'];
+            const escapeCSV = (v) => {
+                const s = String(v == null ? '' : v);
+                if (/[",\n]/.test(s)) return '"' + s.replace(/"/g, '""') + '"';
+                return s;
+            };
+            const rows = questionsDB.map(q => [
+                q.id, q.section, q.subcategory, q.difficulty,
+                q.text, q.options[0], q.options[1], q.options[2], q.options[3],
+                q.correct, q.explanation || ''
+            ].map(escapeCSV).join(','));
+            const csv = '﻿' + headers.join(',') + '\n' + rows.join('\n');
+            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `qudurat-questions-${getTodayKey()}.csv`;
+            a.click();
+            URL.revokeObjectURL(url);
+            showToast('✓ تم تصدير الأسئلة', 'success');
+        }
+
+        function parseCSV(text) {
+            const rows = [];
+            let row = [], cell = '', inQuotes = false;
+            for (let i = 0; i < text.length; i++) {
+                const c = text[i];
+                if (inQuotes) {
+                    if (c === '"' && text[i+1] === '"') { cell += '"'; i++; }
+                    else if (c === '"') { inQuotes = false; }
+                    else { cell += c; }
+                } else {
+                    if (c === '"') { inQuotes = true; }
+                    else if (c === ',') { row.push(cell); cell = ''; }
+                    else if (c === '\n') { row.push(cell); rows.push(row); row = []; cell = ''; }
+                    else if (c === '\r') {}
+                    else { cell += c; }
+                }
+            }
+            if (cell || row.length) { row.push(cell); rows.push(row); }
+            return rows;
+        }
+
+        function importQuestionsCSV(input) {
+            const file = input.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                try {
+                    let text = e.target.result;
+                    if (text.charCodeAt(0) === 0xFEFF) text = text.slice(1);
+                    const rows = parseCSV(text);
+                    if (rows.length < 2) {
+                        showToast('❌ الملف فارغ', 'error');
+                        return;
+                    }
+                    const headers = rows[0].map(h => h.trim());
+                    const required = ['section', 'subcategory', 'difficulty', 'text', 'optionA', 'optionB', 'optionC', 'optionD', 'correct'];
+                    const missing = required.filter(h => !headers.includes(h));
+                    if (missing.length) {
+                        showToast(`❌ أعمدة ناقصة: ${missing.join(', ')}`, 'error', 5000);
+                        return;
+                    }
+                    const idx = (name) => headers.indexOf(name);
+                    let added = 0, skipped = 0;
+                    for (let i = 1; i < rows.length; i++) {
+                        const r = rows[i];
+                        if (!r || r.length < required.length) continue;
+                        const newQ = {
+                            id: Date.now() + i,
+                            section: r[idx('section')],
+                            subcategory: r[idx('subcategory')],
+                            difficulty: r[idx('difficulty')],
+                            text: r[idx('text')],
+                            options: [r[idx('optionA')], r[idx('optionB')], r[idx('optionC')], r[idx('optionD')]],
+                            correct: parseInt(r[idx('correct')]),
+                            explanation: idx('explanation') >= 0 ? r[idx('explanation')] : ''
+                        };
+                        if (validateQuestion(newQ).length === 0) {
+                            questionsDB.push(newQ);
+                            added++;
+                        } else {
+                            skipped++;
+                        }
+                    }
+                    saveData();
+                    renderQuestionsTable();
+                    showToast(`✓ تم استيراد ${added} سؤال${skipped ? ` (تم تخطي ${skipped})` : ''}`, 'success', 4000);
+                } catch (err) {
+                    showToast('❌ خطأ في قراءة الملف', 'error');
+                }
+                input.value = '';
+            };
+            reader.readAsText(file);
+        }
+
+        // ==================== Service Worker / PWA ====================
+        function registerServiceWorker() {
+            if ('serviceWorker' in navigator) {
+                window.addEventListener('load', () => {
+                    navigator.serviceWorker.register('service-worker.js').catch(() => {
+                        // Silently ignore - works fine without SW
+                    });
+                });
             }
         }
 

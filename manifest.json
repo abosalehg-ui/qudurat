@@ -1,0 +1,22 @@
+{
+  "name": "قدراتي - منصة التدريب على اختبار القدرات",
+  "short_name": "قدراتي",
+  "description": "منصة تفاعلية للتدريب على اختبار القدرات العامة (قياس)",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#1a5f7a",
+  "theme_color": "#1a5f7a",
+  "lang": "ar",
+  "dir": "rtl",
+  "categories": ["education"],
+  "icons": [
+    {
+      "src": "icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
