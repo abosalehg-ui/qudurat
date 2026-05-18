@@ -1443,9 +1443,13 @@
         <!-- Admin Page -->
         <div class="page" id="page-admin">
             <span class="back-btn" onclick="showPage('home')">→ العودة للرئيسية</span>
-            
-            <div class="section-header">
+
+            <div class="section-header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
                 <h2 class="section-title"><span>⚙️</span> لوحة التحكم</h2>
+                <div style="display: flex; gap: 0.5rem;">
+                    <button class="btn btn-sm" onclick="changeAdminPassword()" style="background: var(--light); color: var(--dark);">🔑 تغيير كلمة المرور</button>
+                    <button class="btn btn-sm btn-danger" onclick="logoutAdmin()">🚪 تسجيل خروج</button>
+                </div>
             </div>
 
             <div class="admin-tabs">
@@ -1697,6 +1701,14 @@
                 testsDB = getSampleTests();
             }
             saveData();
+        }
+
+        function escapeAttr(value) {
+            return String(value == null ? '' : value)
+                .replace(/&/g, '&amp;')
+                .replace(/"/g, '&quot;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;');
         }
 
         // ==================== Sample Data ====================
@@ -9241,14 +9253,132 @@
 ];
 }
 
+        function getSampleTests() {
+            return [
+                {
+                    id: 1001,
+                    name: 'اختبار تجريبي قصير',
+                    description: 'مناسب للتعرف على نمط الأسئلة',
+                    verbalCount: 10,
+                    quantCount: 10,
+                    timeLimit: 15
+                },
+                {
+                    id: 1002,
+                    name: 'اختبار متوسط',
+                    description: 'تدريب على الأقسام اللفظية والكمية',
+                    verbalCount: 25,
+                    quantCount: 25,
+                    timeLimit: 35
+                },
+                {
+                    id: 1003,
+                    name: 'اختبار شامل',
+                    description: 'تدريب مكثف لجميع الأقسام',
+                    verbalCount: 35,
+                    quantCount: 35,
+                    timeLimit: 60
+                },
+                {
+                    id: 1004,
+                    name: 'محاكاة قياس الكاملة',
+                    description: 'محاكاة مطابقة لاختبار قياس الفعلي',
+                    verbalCount: 65,
+                    quantCount: 55,
+                    timeLimit: 125
+                }
+            ];
+        }
+
+        // ==================== Admin Authentication ====================
+        async function hashPassword(password) {
+            const encoder = new TextEncoder();
+            const data = encoder.encode(password);
+            const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+            return Array.from(new Uint8Array(hashBuffer))
+                .map(b => b.toString(16).padStart(2, '0'))
+                .join('');
+        }
+
+        async function ensureAdminAuth() {
+            if (sessionStorage.getItem('qudurat_admin_unlocked') === '1') {
+                return true;
+            }
+
+            const storedHash = localStorage.getItem('qudurat_admin_pwd');
+
+            if (!storedHash) {
+                const pwd = prompt('🔐 إعداد كلمة المرور لأول مرة\n\nأدخل كلمة مرور جديدة لحماية لوحة التحكم (4 أحرف على الأقل):');
+                if (pwd === null) return false;
+                if (!pwd || pwd.length < 4) {
+                    alert('كلمة المرور قصيرة جداً (4 أحرف على الأقل)');
+                    return false;
+                }
+                const confirmPwd = prompt('أعد إدخال كلمة المرور للتأكيد:');
+                if (confirmPwd !== pwd) {
+                    alert('كلمتا المرور غير متطابقتين');
+                    return false;
+                }
+                const hash = await hashPassword(pwd);
+                localStorage.setItem('qudurat_admin_pwd', hash);
+                sessionStorage.setItem('qudurat_admin_unlocked', '1');
+                alert('✓ تم حفظ كلمة المرور بنجاح');
+                return true;
+            }
+
+            const pwd = prompt('🔐 لوحة التحكم محمية\n\nأدخل كلمة المرور:');
+            if (pwd === null) return false;
+            const hash = await hashPassword(pwd);
+            if (hash === storedHash) {
+                sessionStorage.setItem('qudurat_admin_unlocked', '1');
+                return true;
+            }
+            alert('❌ كلمة المرور غير صحيحة');
+            return false;
+        }
+
+        async function changeAdminPassword() {
+            const oldPwd = prompt('أدخل كلمة المرور الحالية:');
+            if (oldPwd === null) return;
+            const oldHash = await hashPassword(oldPwd);
+            if (oldHash !== localStorage.getItem('qudurat_admin_pwd')) {
+                alert('❌ كلمة المرور الحالية غير صحيحة');
+                return;
+            }
+            const newPwd = prompt('أدخل كلمة المرور الجديدة (4 أحرف على الأقل):');
+            if (newPwd === null) return;
+            if (!newPwd || newPwd.length < 4) {
+                alert('كلمة المرور قصيرة جداً');
+                return;
+            }
+            const confirmPwd = prompt('أعد إدخال كلمة المرور الجديدة:');
+            if (confirmPwd !== newPwd) {
+                alert('كلمتا المرور غير متطابقتين');
+                return;
+            }
+            const newHash = await hashPassword(newPwd);
+            localStorage.setItem('qudurat_admin_pwd', newHash);
+            alert('✓ تم تغيير كلمة المرور بنجاح');
+        }
+
+        function logoutAdmin() {
+            sessionStorage.removeItem('qudurat_admin_unlocked');
+            showPage('home');
+        }
+
         // ==================== Navigation ====================
-        function showPage(pageName) {
+        async function showPage(pageName) {
+            if (pageName === 'admin') {
+                const ok = await ensureAdminAuth();
+                if (!ok) return;
+            }
+
             document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
             document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
-            
+
             const page = document.getElementById(`page-${pageName}`);
             if (page) page.classList.add('active');
-            
+
             const link = document.querySelector(`.nav-link[data-page="${pageName}"]`);
             if (link) link.classList.add('active');
 
@@ -9878,6 +10008,28 @@
             ).join('');
         }
 
+        function validateQuestion(data) {
+            const errors = [];
+            if (!data.text || data.text.length < 3) {
+                errors.push('نص السؤال قصير جداً (3 أحرف على الأقل)');
+            }
+            if (data.options.some(o => !o)) {
+                errors.push('يجب ملء جميع الخيارات الأربعة');
+            } else {
+                const unique = new Set(data.options.map(o => o.trim()));
+                if (unique.size !== data.options.length) {
+                    errors.push('توجد خيارات مكررة - يجب أن تكون الخيارات مختلفة');
+                }
+            }
+            if (isNaN(data.correct) || data.correct < 0 || data.correct > 3) {
+                errors.push('يجب اختيار إجابة صحيحة');
+            }
+            if (data.explanation && data.explanation.length > 0 && data.explanation.length < 5) {
+                errors.push('الشرح قصير جداً');
+            }
+            return errors;
+        }
+
         function addQuestion() {
             const newQ = {
                 id: Date.now(),
@@ -9896,14 +10048,15 @@
                 explanation: document.getElementById('qExplanation').value.trim()
             };
 
-            if (!newQ.text || newQ.options.some(o => !o)) {
-                alert('الرجاء ملء جميع الحقول المطلوبة');
+            const errors = validateQuestion(newQ);
+            if (errors.length > 0) {
+                alert('❌ يرجى تصحيح الأخطاء التالية:\n\n• ' + errors.join('\n• '));
                 return;
             }
 
             questionsDB.push(newQ);
             saveData();
-            
+
             // Clear form
             document.getElementById('qContext').value = '';
             document.getElementById('qText').value = '';
@@ -9913,7 +10066,8 @@
             document.getElementById('optionD').value = '';
             document.getElementById('qExplanation').value = '';
 
-            alert('تم إضافة السؤال بنجاح!');
+            renderQuestionsTable();
+            alert('✓ تم إضافة السؤال بنجاح!');
         }
 
         function renderQuestionsTable() {
@@ -9960,14 +10114,14 @@
             document.getElementById('editModalContent').innerHTML = `
                 <div class="form-group">
                     <label class="form-label">نص السؤال</label>
-                    <textarea class="form-textarea" id="editText">${q.text}</textarea>
+                    <textarea class="form-textarea" id="editText">${escapeAttr(q.text)}</textarea>
                 </div>
                 <div class="form-group">
                     <label class="form-label">الخيارات</label>
-                    <input type="text" class="form-input" id="editOpt0" value="${q.options[0]}" style="margin-bottom: 0.5rem;">
-                    <input type="text" class="form-input" id="editOpt1" value="${q.options[1]}" style="margin-bottom: 0.5rem;">
-                    <input type="text" class="form-input" id="editOpt2" value="${q.options[2]}" style="margin-bottom: 0.5rem;">
-                    <input type="text" class="form-input" id="editOpt3" value="${q.options[3]}">
+                    <input type="text" class="form-input" id="editOpt0" value="${escapeAttr(q.options[0])}" style="margin-bottom: 0.5rem;">
+                    <input type="text" class="form-input" id="editOpt1" value="${escapeAttr(q.options[1])}" style="margin-bottom: 0.5rem;">
+                    <input type="text" class="form-input" id="editOpt2" value="${escapeAttr(q.options[2])}" style="margin-bottom: 0.5rem;">
+                    <input type="text" class="form-input" id="editOpt3" value="${escapeAttr(q.options[3])}">
                 </div>
                 <div class="form-group">
                     <label class="form-label">الإجابة الصحيحة</label>
@@ -9980,7 +10134,7 @@
                 </div>
                 <div class="form-group">
                     <label class="form-label">الشرح</label>
-                    <textarea class="form-textarea" id="editExplanation">${q.explanation}</textarea>
+                    <textarea class="form-textarea" id="editExplanation">${escapeAttr(q.explanation || '')}</textarea>
                 </div>
                 <button class="btn btn-success btn-block" onclick="saveEdit(${q.id})">حفظ التعديلات</button>
             `;
@@ -9992,19 +10146,33 @@
             const q = questionsDB.find(q => q.id === qId);
             if (!q) return;
 
-            q.text = document.getElementById('editText').value;
-            q.options = [
-                document.getElementById('editOpt0').value,
-                document.getElementById('editOpt1').value,
-                document.getElementById('editOpt2').value,
-                document.getElementById('editOpt3').value
-            ];
-            q.correct = parseInt(document.getElementById('editCorrect').value);
-            q.explanation = document.getElementById('editExplanation').value;
+            const updated = {
+                text: document.getElementById('editText').value.trim(),
+                options: [
+                    document.getElementById('editOpt0').value.trim(),
+                    document.getElementById('editOpt1').value.trim(),
+                    document.getElementById('editOpt2').value.trim(),
+                    document.getElementById('editOpt3').value.trim()
+                ],
+                correct: parseInt(document.getElementById('editCorrect').value),
+                explanation: document.getElementById('editExplanation').value.trim()
+            };
+
+            const errors = validateQuestion(updated);
+            if (errors.length > 0) {
+                alert('❌ يرجى تصحيح الأخطاء التالية:\n\n• ' + errors.join('\n• '));
+                return;
+            }
+
+            q.text = updated.text;
+            q.options = updated.options;
+            q.correct = updated.correct;
+            q.explanation = updated.explanation;
 
             saveData();
             closeEditModal();
             renderQuestionsTable();
+            alert('✓ تم حفظ التعديلات بنجاح');
         }
 
         function closeEditModal() {
@@ -10017,8 +10185,37 @@
             const quantCount = parseInt(document.getElementById('testQuantCount').value);
             const timeLimit = parseInt(document.getElementById('testTime').value);
 
-            if (!name) {
-                alert('الرجاء إدخال اسم الاختبار');
+            const errors = [];
+            if (!name || name.length < 3) {
+                errors.push('اسم الاختبار قصير جداً (3 أحرف على الأقل)');
+            }
+            if (testsDB.some(t => t.name === name)) {
+                errors.push('يوجد اختبار آخر بنفس الاسم');
+            }
+            if (isNaN(verbalCount) || verbalCount < 0) {
+                errors.push('عدد الأسئلة اللفظية غير صالح');
+            }
+            if (isNaN(quantCount) || quantCount < 0) {
+                errors.push('عدد الأسئلة الكمية غير صالح');
+            }
+            if (verbalCount + quantCount === 0) {
+                errors.push('يجب أن يحتوي الاختبار على سؤال واحد على الأقل');
+            }
+            if (isNaN(timeLimit) || timeLimit < 1) {
+                errors.push('مدة الاختبار يجب أن تكون دقيقة واحدة على الأقل');
+            }
+
+            const availableVerbal = questionsDB.filter(q => q.section === 'verbal').length;
+            const availableQuant = questionsDB.filter(q => q.section === 'quant').length;
+            if (verbalCount > availableVerbal) {
+                errors.push(`عدد الأسئلة اللفظية المطلوب (${verbalCount}) أكبر من المتوفر (${availableVerbal})`);
+            }
+            if (quantCount > availableQuant) {
+                errors.push(`عدد الأسئلة الكمية المطلوب (${quantCount}) أكبر من المتوفر (${availableQuant})`);
+            }
+
+            if (errors.length > 0) {
+                alert('❌ يرجى تصحيح الأخطاء التالية:\n\n• ' + errors.join('\n• '));
                 return;
             }
 
@@ -10034,7 +10231,8 @@
             saveData();
             document.getElementById('testName').value = '';
             renderAdminTests();
-            alert('تم إنشاء الاختبار بنجاح!');
+            renderTests();
+            alert('✓ تم إنشاء الاختبار بنجاح!');
         }
 
         function renderAdminTests() {
