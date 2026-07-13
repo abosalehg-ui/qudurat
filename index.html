@@ -512,6 +512,18 @@
             cursor: pointer;
             transition: var(--transition);
             border: 2px solid transparent;
+            /* الخيارات أزرار حقيقية (لدعم لوحة المفاتيح) — إعادة ضبط مظهر الزر */
+            width: 100%;
+            font-family: inherit;
+            font-size: 1rem;
+            text-align: inherit;
+            color: inherit;
+            line-height: inherit;
+        }
+
+        .option:focus-visible {
+            outline: 3px solid var(--primary-light);
+            outline-offset: 2px;
         }
 
         .option:hover {
@@ -762,6 +774,15 @@
             font-size: 1.5rem;
             cursor: pointer;
             transition: var(--transition);
+            background: none;
+            border: none;
+            padding: 0;
+        }
+
+        .saved-indicator:focus-visible {
+            outline: 3px solid var(--primary-light);
+            outline-offset: 2px;
+            border-radius: 6px;
         }
 
         .saved-indicator:hover {
@@ -1382,7 +1403,7 @@
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#1a5f7a">
     <link rel="icon" type="image/svg+xml" href="icon.svg">
-    <link rel="apple-touch-icon" href="icon.svg">
+    <link rel="apple-touch-icon" href="icon-180.png">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
     <meta name="apple-mobile-web-app-title" content="قدراتي">
@@ -1399,22 +1420,22 @@
     <!-- Navigation -->
     <nav class="navbar" role="navigation" aria-label="القائمة الرئيسية">
         <div class="nav-container">
-            <a href="#" class="logo" onclick="showPage('home')">
+            <a href="#home" class="logo">
                 <div class="logo-icon">📚</div>
                 <span>قدراتي</span>
             </a>
-            
+
             <button class="mobile-menu-btn" onclick="toggleMobileMenu()">☰</button>
-            
+
             <div class="nav-links" id="navLinks">
-                <a href="#" class="nav-link active" onclick="showPage('home')" data-page="home">الرئيسية</a>
-                <a href="#" class="nav-link" onclick="showPage('verbal')" data-page="verbal">اللفظي</a>
-                <a href="#" class="nav-link" onclick="showPage('quant')" data-page="quant">الكمي</a>
-                <a href="#" class="nav-link" onclick="showPage('tests')" data-page="tests">الاختبارات</a>
-                <a href="#" class="nav-link" onclick="showPage('solved')" data-page="solved">نماذج محلولة</a>
-                <a href="#" class="nav-link" onclick="showPage('saved')" data-page="saved">المحفوظات</a>
-                <a href="#" class="nav-link" onclick="showPage('progress')" data-page="progress">تقدمي</a>
-                <a href="#" class="nav-link" onclick="showPage('admin')" data-page="admin">لوحة التحكم</a>
+                <a href="#home" class="nav-link active" data-page="home">الرئيسية</a>
+                <a href="#verbal" class="nav-link" data-page="verbal">اللفظي</a>
+                <a href="#quant" class="nav-link" data-page="quant">الكمي</a>
+                <a href="#tests" class="nav-link" data-page="tests">الاختبارات</a>
+                <a href="#solved" class="nav-link" data-page="solved">نماذج محلولة</a>
+                <a href="#saved" class="nav-link" data-page="saved">المحفوظات</a>
+                <a href="#progress" class="nav-link" data-page="progress">تقدمي</a>
+                <a href="#admin" class="nav-link" data-page="admin">لوحة التحكم</a>
             </div>
             
             <div class="nav-stats">
@@ -1966,11 +1987,11 @@
     <footer class="footer">
         <div class="footer-content">
             <div class="footer-links">
-                <a href="#" onclick="showPage('home')">الرئيسية</a>
-                <a href="#" onclick="showPage('verbal')">اللفظي</a>
-                <a href="#" onclick="showPage('quant')">الكمي</a>
-                <a href="#" onclick="showPage('tests')">الاختبارات</a>
-                <a href="#" onclick="showPage('admin')">لوحة التحكم</a>
+                <a href="#home">الرئيسية</a>
+                <a href="#verbal">اللفظي</a>
+                <a href="#quant">الكمي</a>
+                <a href="#tests">الاختبارات</a>
+                <a href="#admin">لوحة التحكم</a>
             </div>
             <p>تطوير: <strong>عبدالكريم العبود</strong> | <a href="mailto:abo.saleh.g@gmail.com">abo.saleh.g@gmail.com</a></p>
             <p style="margin-top: 0.5rem; opacity: 0.7;">© 2024 قدراتي - جميع الحقوق محفوظة</p>
@@ -2119,6 +2140,7 @@
             renderQuestionsTable();
             registerServiceWorker();
             checkDailyChallenge();
+            renderRoute(); // دعم الروابط العميقة (مثل ‎#tests) عند فتح الصفحة
         }
 
         function loadData() {
@@ -9902,12 +9924,43 @@
         }
 
         // ==================== Navigation ====================
-        async function showPage(pageName) {
-            if (pageName === 'admin') {
-                const ok = await ensureAdminAuth();
-                if (!ok) return;
+        // توجيه عبر hash: زر الرجوع في المتصفح يعمل، والروابط العميقة
+        // (مثل ‎#tests) قابلة للمشاركة. showPage تغيّر الـ hash فقط،
+        // وrenderRoute هي المسؤولة عن العرض عند كل تغيير.
+        let currentPage = '';
+
+        async function renderRoute() {
+            const pageName = location.hash.replace('#', '') || 'home';
+            if (pageName === currentPage) return;
+
+            // صفحة التدريب بلا جلسة نشطة (رابط مباشر أو رجوع بعد الانتهاء)
+            if (pageName === 'practice' && !currentSession.mode) {
+                location.hash = 'home';
+                return;
             }
 
+            // حماية الاختبار المؤقت الجاري من مغادرة غير مقصودة بزر الرجوع
+            if (currentPage === 'practice' && currentSession.mode === 'test'
+                && currentSession.timerInterval && pageName !== 'results') {
+                if (!confirm('لديك اختبار جارٍ — ستُلغى نتيجته إذا غادرت. هل تريد المغادرة؟')) {
+                    location.hash = 'practice';
+                    return;
+                }
+                currentSession.mode = null;
+            }
+
+            if (pageName === 'admin') {
+                const ok = await ensureAdminAuth();
+                if (!ok) {
+                    location.hash = currentPage || 'home';
+                    return;
+                }
+            }
+
+            activatePage(pageName);
+        }
+
+        function activatePage(pageName) {
             document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
             document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
 
@@ -9917,9 +9970,13 @@
             const link = document.querySelector(`.nav-link[data-page="${pageName}"]`);
             if (link) link.classList.add('active');
 
+            // إغلاق قائمة الجوال بعد اختيار وجهة
+            document.getElementById('navLinks').classList.remove('show');
+
             // Stop timer if leaving practice/test
             if (pageName !== 'practice' && currentSession.timerInterval) {
                 clearInterval(currentSession.timerInterval);
+                currentSession.timerInterval = null;
                 document.getElementById('timerContainer').classList.remove('show');
             }
 
@@ -9929,9 +9986,21 @@
             if (pageName === 'progress') renderProgress();
             if (pageName === 'solved') renderSolvedExamples();
 
+            currentPage = pageName;
+
             // Scroll to top
             window.scrollTo({ top: 0, behavior: 'smooth' });
         }
+
+        function showPage(pageName) {
+            if (location.hash === `#${pageName}`) {
+                renderRoute();
+                return;
+            }
+            location.hash = pageName;
+        }
+
+        window.addEventListener('hashchange', renderRoute);
 
         function toggleMobileMenu() {
             document.getElementById('navLinks').classList.toggle('show');
@@ -10026,7 +10095,8 @@
             const diffClass = `difficulty-${q.difficulty}`;
 
             let html = `
-                <span class="saved-indicator" onclick="toggleSaveQuestion(${q.id})">${savedIcon}</span>
+                <button type="button" class="saved-indicator" onclick="toggleSaveQuestion(${q.id})"
+                        aria-pressed="${isSaved}" aria-label="حفظ السؤال للمراجعة لاحقاً">${savedIcon}</button>
                 <div class="question-header">
                     <span class="question-number">السؤال ${current} من ${total}</span>
                     <span class="question-difficulty ${diffClass}">${diffLabels[q.difficulty]}</span>
@@ -10039,7 +10109,7 @@
 
             html += `<div class="question-text">${escapeHTML(q.text)}</div>`;
 
-            html += '<div class="options-list">';
+            html += '<div class="options-list" role="radiogroup" aria-label="خيارات الإجابة">';
             const letters = ['أ', 'ب', 'ج', 'د'];
             const answered = currentSession.answers[currentSession.currentIndex];
             const revealed = currentSession.mode === 'practice' && answered !== null;
@@ -10052,10 +10122,11 @@
                     stateClass = 'selected';
                 }
                 html += `
-                    <div class="option ${stateClass}" onclick="selectOption(${i})">
+                    <button type="button" class="option ${stateClass}" role="radio"
+                            aria-checked="${answered === i}" onclick="selectOption(${i})">
                         <span class="option-letter">${letters[i]}</span>
                         <span>${escapeHTML(opt)}</span>
-                    </div>
+                    </button>
                 `;
             });
             html += '</div>';
@@ -10085,29 +10156,12 @@
             currentSession.answers[currentSession.currentIndex] = index;
 
             const q = currentSession.questions[currentSession.currentIndex];
-            const options = document.querySelectorAll('.option');
-            
-            options.forEach((opt, i) => {
-                opt.classList.remove('selected', 'correct', 'wrong');
-                if (currentSession.mode === 'practice') {
-                    if (i === q.correct) {
-                        opt.classList.add('correct');
-                    } else if (i === index && i !== q.correct) {
-                        opt.classList.add('wrong');
-                    }
-                } else if (i === index) {
-                    opt.classList.add('selected');
-                }
-            });
-
-            // Show explanation in practice mode
             if (currentSession.mode === 'practice') {
-                document.getElementById('explanationText').textContent = q.explanation;
-                document.getElementById('explanationBox').classList.add('show');
-                
-                // Update progress
                 updateCategoryProgress(q.section, q.subcategory, index === q.correct);
             }
+
+            // renderQuestion يعرض حالة الاختيار/الكشف والشرح بالكامل
+            renderQuestion();
         }
 
         function previousQuestion() {
