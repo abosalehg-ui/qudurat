@@ -2154,10 +2154,11 @@
             saveData();
         }
 
-        function escapeAttr(value) {
+        function escapeHTML(value) {
             return String(value == null ? '' : value)
                 .replace(/&/g, '&amp;')
                 .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#39;')
                 .replace(/</g, '&lt;')
                 .replace(/>/g, '&gt;');
         }
@@ -9950,10 +9951,10 @@
             `;
 
             if (q.context) {
-                html += `<div class="question-context">${q.context}</div>`;
+                html += `<div class="question-context">${escapeHTML(q.context)}</div>`;
             }
 
-            html += `<div class="question-text">${q.text}</div>`;
+            html += `<div class="question-text">${escapeHTML(q.text)}</div>`;
 
             html += '<div class="options-list">';
             const letters = ['أ', 'ب', 'ج', 'د'];
@@ -9962,7 +9963,7 @@
                 html += `
                     <div class="option ${selectedClass}" onclick="selectOption(${i})">
                         <span class="option-letter">${letters[i]}</span>
-                        <span>${opt}</span>
+                        <span>${escapeHTML(opt)}</span>
                     </div>
                 `;
             });
@@ -10180,13 +10181,13 @@
                     <div class="sw-card strength">
                         <h4>✅ نقاط القوة</h4>
                         <ul class="sw-list">
-                            ${strengths.length > 0 ? strengths.map(s => `<li>⭐ ${s}</li>`).join('') : '<li>استمر في التدريب لتحسين أدائك</li>'}
+                            ${strengths.length > 0 ? strengths.map(s => `<li>⭐ ${escapeHTML(s)}</li>`).join('') : '<li>استمر في التدريب لتحسين أدائك</li>'}
                         </ul>
                     </div>
                     <div class="sw-card weakness">
                         <h4>⚠️ تحتاج تحسين</h4>
                         <ul class="sw-list">
-                            ${weaknesses.length > 0 ? weaknesses.map(w => `<li>📝 ${w}</li>`).join('') : '<li>أداء ممتاز! استمر</li>'}
+                            ${weaknesses.length > 0 ? weaknesses.map(w => `<li>📝 ${escapeHTML(w)}</li>`).join('') : '<li>أداء ممتاز! استمر</li>'}
                         </ul>
                     </div>
                 </div>
@@ -10280,11 +10281,11 @@
                         </span>
                         <button class="btn btn-sm btn-danger" onclick="removeSaved(${q.id})">إزالة</button>
                     </div>
-                    <div class="question-text">${q.text}</div>
+                    <div class="question-text">${escapeHTML(q.text)}</div>
                     <div class="explanation-box show" style="margin-top: 1rem;">
                         <div class="explanation-title">💡 الإجابة والشرح</div>
-                        <p><strong>الإجابة:</strong> ${q.options[q.correct]}</p>
-                        <p style="margin-top: 0.5rem;">${q.explanation}</p>
+                        <p><strong>الإجابة:</strong> ${escapeHTML(q.options[q.correct])}</p>
+                        <p style="margin-top: 0.5rem;">${escapeHTML(q.explanation)}</p>
                     </div>
                 </div>
             `).join('');
@@ -10303,8 +10304,8 @@
             container.innerHTML = testsDB.map(test => `
                 <div class="card" onclick="startTest(${test.id})">
                     <div class="card-icon test">📝</div>
-                    <h3>${test.name}</h3>
-                    <p>${test.description}</p>
+                    <h3>${escapeHTML(test.name)}</h3>
+                    <p>${escapeHTML(test.description)}</p>
                     <div class="card-meta">
                         <span class="card-badge">${test.verbalCount + test.quantCount} سؤال</span>
                         <span class="card-badge">⏱️ ${test.timeLimit} دقيقة</span>
@@ -10330,19 +10331,19 @@
                             ${q.difficulty === 'easy' ? 'سهل' : q.difficulty === 'medium' ? 'متوسط' : 'صعب'}
                         </span>
                     </div>
-                    ${q.context ? `<div class="question-context">${q.context}</div>` : ''}
-                    <div class="question-text">${q.text}</div>
+                    ${q.context ? `<div class="question-context">${escapeHTML(q.context)}</div>` : ''}
+                    <div class="question-text">${escapeHTML(q.text)}</div>
                     <div class="options-list" style="margin: 1rem 0;">
                         ${q.options.map((opt, i) => `
                             <div class="option ${i === q.correct ? 'correct' : ''}">
                                 <span class="option-letter">${['أ', 'ب', 'ج', 'د'][i]}</span>
-                                <span>${opt}</span>
+                                <span>${escapeHTML(opt)}</span>
                             </div>
                         `).join('')}
                     </div>
                     <div class="explanation-box show">
                         <div class="explanation-title">💡 الشرح التفصيلي</div>
-                        <p>${q.explanation}</p>
+                        <p>${escapeHTML(q.explanation)}</p>
                     </div>
                 </div>
             `).join('');
@@ -10400,14 +10401,14 @@
                 .filter(([_, s]) => s.attempted >= 3 && s.correct / s.attempted < 0.5)
                 .map(([k]) => getCategoryName(k));
 
-            document.getElementById('strengthsList').innerHTML = 
-                strengths.length > 0 
-                    ? strengths.map(s => `<li>⭐ ${s}</li>`).join('')
+            document.getElementById('strengthsList').innerHTML =
+                strengths.length > 0
+                    ? strengths.map(s => `<li>⭐ ${escapeHTML(s)}</li>`).join('')
                     : '<li>⭐ أكمل المزيد من التدريب لاكتشاف نقاط قوتك</li>';
 
-            document.getElementById('weaknessesList').innerHTML = 
-                weaknesses.length > 0 
-                    ? weaknesses.map(w => `<li>📝 ${w}</li>`).join('')
+            document.getElementById('weaknessesList').innerHTML =
+                weaknesses.length > 0
+                    ? weaknesses.map(w => `<li>📝 ${escapeHTML(w)}</li>`).join('')
                     : '<li>📝 أكمل المزيد من التدريب لاكتشاف ما تحتاج تحسينه</li>';
 
             // Update home page score
@@ -10546,7 +10547,7 @@
             tbody.innerHTML = filtered.map((q, i) => `
                 <tr>
                     <td>${i + 1}</td>
-                    <td style="max-width: 300px; overflow: hidden; text-overflow: ellipsis;">${q.text}</td>
+                    <td style="max-width: 300px; overflow: hidden; text-overflow: ellipsis;">${escapeHTML(q.text)}</td>
                     <td>${q.section === 'verbal' ? 'لفظي' : 'كمي'}</td>
                     <td><span class="question-difficulty difficulty-${q.difficulty}">${q.difficulty === 'easy' ? 'سهل' : q.difficulty === 'medium' ? 'متوسط' : 'صعب'}</span></td>
                     <td>
@@ -10578,14 +10579,14 @@
             document.getElementById('editModalContent').innerHTML = `
                 <div class="form-group">
                     <label class="form-label">نص السؤال</label>
-                    <textarea class="form-textarea" id="editText">${escapeAttr(q.text)}</textarea>
+                    <textarea class="form-textarea" id="editText">${escapeHTML(q.text)}</textarea>
                 </div>
                 <div class="form-group">
                     <label class="form-label">الخيارات</label>
-                    <input type="text" class="form-input" id="editOpt0" value="${escapeAttr(q.options[0])}" style="margin-bottom: 0.5rem;">
-                    <input type="text" class="form-input" id="editOpt1" value="${escapeAttr(q.options[1])}" style="margin-bottom: 0.5rem;">
-                    <input type="text" class="form-input" id="editOpt2" value="${escapeAttr(q.options[2])}" style="margin-bottom: 0.5rem;">
-                    <input type="text" class="form-input" id="editOpt3" value="${escapeAttr(q.options[3])}">
+                    <input type="text" class="form-input" id="editOpt0" value="${escapeHTML(q.options[0])}" style="margin-bottom: 0.5rem;">
+                    <input type="text" class="form-input" id="editOpt1" value="${escapeHTML(q.options[1])}" style="margin-bottom: 0.5rem;">
+                    <input type="text" class="form-input" id="editOpt2" value="${escapeHTML(q.options[2])}" style="margin-bottom: 0.5rem;">
+                    <input type="text" class="form-input" id="editOpt3" value="${escapeHTML(q.options[3])}">
                 </div>
                 <div class="form-group">
                     <label class="form-label">الإجابة الصحيحة</label>
@@ -10598,7 +10599,7 @@
                 </div>
                 <div class="form-group">
                     <label class="form-label">الشرح</label>
-                    <textarea class="form-textarea" id="editExplanation">${escapeAttr(q.explanation || '')}</textarea>
+                    <textarea class="form-textarea" id="editExplanation">${escapeHTML(q.explanation || '')}</textarea>
                 </div>
                 <button class="btn btn-success btn-block" onclick="saveEdit(${q.id})">حفظ التعديلات</button>
             `;
@@ -10704,7 +10705,7 @@
             container.innerHTML = testsDB.map(test => `
                 <div style="display: flex; justify-content: space-between; align-items: center; padding: 1rem; background: var(--light); border-radius: 12px; margin-bottom: 0.5rem;">
                     <div>
-                        <strong>${test.name}</strong>
+                        <strong>${escapeHTML(test.name)}</strong>
                         <span style="color: var(--gray); margin-right: 1rem;">(${test.verbalCount + test.quantCount} سؤال - ${test.timeLimit} دقيقة)</span>
                     </div>
                     <button class="btn btn-sm btn-danger" onclick="deleteTest(${test.id})">حذف</button>
@@ -10783,7 +10784,7 @@
             if (!container) return;
             const earned = userProgress.badges || [];
             container.innerHTML = BADGES.map(b => `
-                <div class="badge-item ${earned.includes(b.id) ? 'unlocked' : 'locked'}" title="${escapeAttr(b.desc)}">
+                <div class="badge-item ${earned.includes(b.id) ? 'unlocked' : 'locked'}" title="${escapeHTML(b.desc)}">
                     <div class="badge-icon" aria-hidden="true">${b.icon}</div>
                     <div class="badge-name">${b.name}</div>
                     <div class="badge-desc">${b.desc}</div>
@@ -10965,6 +10966,23 @@
             showToast('✓ تم تصدير النسخة الاحتياطية', 'success');
         }
 
+        function isValidImportedQuestion(q) {
+            return q && typeof q === 'object'
+                && Array.isArray(q.options) && q.options.length === 4
+                && q.options.every(o => typeof o === 'string')
+                && typeof q.correct === 'number'
+                && validateQuestion(q).length === 0;
+        }
+
+        function isValidImportedTest(t) {
+            return t && typeof t === 'object'
+                && typeof t.name === 'string' && t.name.trim().length > 0
+                && Number.isFinite(t.verbalCount) && t.verbalCount >= 0
+                && Number.isFinite(t.quantCount) && t.quantCount >= 0
+                && (t.verbalCount + t.quantCount) > 0
+                && Number.isFinite(t.timeLimit) && t.timeLimit > 0;
+        }
+
         function importAllData(input) {
             const file = input.files[0];
             if (!file) return;
@@ -10972,15 +10990,39 @@
             reader.onload = (e) => {
                 try {
                     const data = JSON.parse(e.target.result);
-                    if (!confirm('سيتم استبدال جميع البيانات الحالية. هل أنت متأكد؟')) return;
-                    if (data.questions) questionsDB = data.questions;
-                    if (data.tests) testsDB = data.tests;
-                    if (data.progress) userProgress = { ...userProgress, ...data.progress };
+                    if (!data || typeof data !== 'object'
+                        || (!Array.isArray(data.questions) && !Array.isArray(data.tests) && !data.progress)) {
+                        showToast('❌ ملف غير صالح: البنية غير معروفة', 'error', 5000);
+                        input.value = '';
+                        return;
+                    }
+                    if (!confirm('سيتم استبدال جميع البيانات الحالية. هل أنت متأكد؟')) {
+                        input.value = '';
+                        return;
+                    }
+                    let skipped = 0;
+                    if (Array.isArray(data.questions)) {
+                        const valid = data.questions.filter(isValidImportedQuestion);
+                        skipped += data.questions.length - valid.length;
+                        questionsDB = valid;
+                    }
+                    if (Array.isArray(data.tests)) {
+                        const valid = data.tests.filter(isValidImportedTest);
+                        skipped += data.tests.length - valid.length;
+                        testsDB = valid;
+                    }
+                    if (data.progress && typeof data.progress === 'object' && !Array.isArray(data.progress)) {
+                        userProgress = { ...userProgress, ...data.progress };
+                    }
                     saveData();
                     renderQuestionsTable();
                     renderAdminTests();
                     renderTests();
-                    showToast('✓ تم استعادة البيانات بنجاح', 'success');
+                    if (skipped > 0) {
+                        showToast(`✓ تمت الاستعادة مع استبعاد ${skipped} عنصر غير صالح`, 'warning', 5000);
+                    } else {
+                        showToast('✓ تم استعادة البيانات بنجاح', 'success');
+                    }
                 } catch (err) {
                     console.error('فشل استيراد النسخة الاحتياطية:', err);
                     showToast('❌ ملف غير صالح', 'error');
