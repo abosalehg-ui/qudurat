@@ -1,8 +1,16 @@
-const CACHE_NAME = 'qudurat-v1';
+const CACHE_NAME = 'qudurat-v2';
 const ASSETS = [
   './',
   './index.html',
-  './manifest.json'
+  './styles.css',
+  './app-core.js',
+  './questions.js',
+  './app.js',
+  './manifest.json',
+  './icon.svg',
+  './icon-180.png',
+  './icon-512.png',
+  './icon-maskable-512.png'
 ];
 
 self.addEventListener('install', (event) => {

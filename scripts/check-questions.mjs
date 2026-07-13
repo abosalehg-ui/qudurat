@@ -1,20 +1,15 @@
 #!/usr/bin/env node
-// فحص سلامة قاعدة الأسئلة المضمّنة في index.html
+// فحص سلامة قاعدة الأسئلة المضمّنة في questions.js
 // أخطاء بنيوية (خيارات مكررة، مؤشر إجابة خاطئ، ...) توقف الفحص بكود خروج 1،
 // أما ملاحظات الجودة (شروح عامة) فتُعرض كتحذيرات فقط.
 import { readFileSync } from 'node:fs';
 
-const html = readFileSync(new URL('../index.html', import.meta.url), 'utf8');
-const start = html.indexOf('function getSampleQuestions()');
-const end = html.indexOf('function getSampleTests()');
-if (start === -1 || end === -1) {
-    console.error('❌ لم يُعثر على getSampleQuestions/getSampleTests في index.html');
+const source = readFileSync(new URL('../questions.js', import.meta.url), 'utf8');
+if (!source.includes('function getSampleQuestions()')) {
+    console.error('❌ لم يُعثر على getSampleQuestions في questions.js');
     process.exit(1);
 }
-let body = html.slice(start, end);
-body = body.slice(body.indexOf('return [') + 7);
-body = body.slice(0, body.lastIndexOf(';'));
-const questions = (0, eval)(body);
+const questions = (0, eval)(source + '\ngetSampleQuestions();');
 
 const SECTIONS = {
     verbal: ['analogy', 'completion', 'reading', 'context'],
