@@ -1,11 +1,9 @@
-name: check-questions
+name: ci
 
 on:
   push:
     branches: [main]
-    paths: ['index.html', 'scripts/**']
   pull_request:
-    paths: ['index.html', 'scripts/**']
 
 jobs:
   check:
@@ -17,3 +15,5 @@ jobs:
           node-version: 20
       - name: فحص سلامة قاعدة الأسئلة
         run: node scripts/check-questions.mjs
+      - name: اختبارات الوحدات
+        run: node --test tests/*.test.cjs
