@@ -1992,8 +1992,18 @@
 
     <script>
         // ==================== Data Store ====================
+        // questionsDB/testsDB تُبنى عند كل تشغيل من (أسئلة العينة في الكود + محتوى المستخدم).
+        // لا يُخزَّن في localStorage إلا محتوى المستخدم، حتى تصل تحديثات المحتوى
+        // في الإصدارات الجديدة إلى المستخدمين الحاليين.
         let questionsDB = [];
         let testsDB = [];
+        let userContent = {
+            customQuestions: [],      // أسئلة أضافها المشرف أو استُوردت
+            questionOverrides: {},    // تعديلات المشرف على أسئلة العينة (id -> سؤال)
+            deletedQuestionIds: [],   // أسئلة عينة حذفها المشرف
+            customTests: [],
+            deletedTestIds: []
+        };
         let userProgress = {
             streak: 0,
             lastActive: null,
@@ -2100,9 +2110,8 @@
         function init() {
             loadPreferences();
             loadData();
-            loadSampleData();
             updateUI();
-            updateStreak();
+            renderStreak();
             renderTests();
             renderSolvedExamples();
             renderSavedQuestions();
@@ -2117,10 +2126,14 @@
             if (stored) {
                 try {
                     const data = JSON.parse(stored);
-                    questionsDB = Array.isArray(data.questions) ? data.questions : [];
-                    testsDB = Array.isArray(data.tests) ? data.tests : [];
-                    if (data.progress && typeof data.progress === 'object') {
-                        userProgress = { ...userProgress, ...data.progress };
+                    if (data && typeof data === 'object' && data.version >= 2) {
+                        applyStoredContent(data);
+                        if (data.progress && typeof data.progress === 'object') {
+                            userProgress = { ...userProgress, ...data.progress };
+                        }
+                    } else if (data && typeof data === 'object') {
+                        migrateLegacyData(data);
+                        saveData();
                     }
                 } catch (err) {
                     console.error('تعذر قراءة البيانات المحفوظة:', err);
@@ -2134,24 +2147,94 @@
                     showToast('تعذر قراءة بياناتك المحفوظة فأُعيدت التهيئة، وحُفظت نسخة منها للاسترجاع', 'error', 6000);
                 }
             }
+            questionsDB = buildQuestionsDB();
+            testsDB = buildTestsDB();
+        }
+
+        function applyStoredContent(data) {
+            userContent = {
+                customQuestions: Array.isArray(data.customQuestions) ? data.customQuestions : [],
+                questionOverrides: (data.questionOverrides && typeof data.questionOverrides === 'object') ? data.questionOverrides : {},
+                deletedQuestionIds: Array.isArray(data.deletedQuestionIds) ? data.deletedQuestionIds : [],
+                customTests: Array.isArray(data.customTests) ? data.customTests : [],
+                deletedTestIds: Array.isArray(data.deletedTestIds) ? data.deletedTestIds : []
+            };
+        }
+
+        // الصيغة القديمة كانت تخزّن قاعدة الأسئلة كاملة؛ نستخرج منها محتوى
+        // المستخدم فقط. لا نستنتج الحذف من الغياب: بيانات إصدار أقدم قد
+        // تنقصها أسئلة أُضيفت لاحقاً، واعتبارها محذوفة يمنع وصولها نهائياً.
+        function migrateLegacyData(data) {
+            const sameQuestion = (a, b) =>
+                a.text === b.text && a.section === b.section && a.subcategory === b.subcategory &&
+                a.difficulty === b.difficulty && a.correct === b.correct &&
+                (a.context || null) === (b.context || null) && (a.explanation || '') === (b.explanation || '') &&
+                JSON.stringify(a.options) === JSON.stringify(b.options);
+
+            if (Array.isArray(data.questions)) {
+                const sampleById = new Map(getSampleQuestions().map(q => [q.id, q]));
+                for (const q of data.questions) {
+                    if (!q || typeof q !== 'object') continue;
+                    const sample = sampleById.get(q.id);
+                    if (!sample) {
+                        userContent.customQuestions.push({ ...q, custom: true });
+                    } else if (!sameQuestion(q, sample)) {
+                        userContent.questionOverrides[q.id] = q;
+                    }
+                }
+            }
+            if (Array.isArray(data.tests)) {
+                const sampleTestIds = new Set(getSampleTests().map(t => t.id));
+                for (const t of data.tests) {
+                    if (!t || typeof t !== 'object') continue;
+                    if (!sampleTestIds.has(t.id)) {
+                        userContent.customTests.push({ ...t, custom: true });
+                    }
+                }
+            }
+            if (data.progress && typeof data.progress === 'object') {
+                const p = { ...data.progress };
+                // توحيد مفاتيح التواريخ على الصيغة الجديدة (YYYY-MM-DD محلية)
+                if (p.lastActive) {
+                    const d = new Date(p.lastActive);
+                    if (!isNaN(d)) p.lastActive = getTodayKey(d);
+                }
+                if (p.dailyStats && typeof p.dailyStats === 'object') {
+                    const converted = {};
+                    for (const [key, val] of Object.entries(p.dailyStats)) {
+                        const d = new Date(key);
+                        converted[isNaN(d) ? key : getTodayKey(d)] = val;
+                    }
+                    p.dailyStats = converted;
+                }
+                userProgress = { ...userProgress, ...p };
+            }
+        }
+
+        function buildQuestionsDB() {
+            const merged = [];
+            for (const q of getSampleQuestions()) {
+                if (userContent.deletedQuestionIds.includes(q.id)) continue;
+                merged.push(userContent.questionOverrides[q.id] || q);
+            }
+            return merged.concat(userContent.customQuestions);
+        }
+
+        function buildTestsDB() {
+            const merged = [];
+            for (const t of getSampleTests()) {
+                if (userContent.deletedTestIds.includes(t.id)) continue;
+                merged.push(t);
+            }
+            return merged.concat(userContent.customTests);
         }
 
         function saveData() {
             localStorage.setItem('qudurat_data', JSON.stringify({
-                questions: questionsDB,
-                tests: testsDB,
+                version: 2,
+                ...userContent,
                 progress: userProgress
             }));
-        }
-
-        function loadSampleData() {
-            if (questionsDB.length === 0) {
-                questionsDB = getSampleQuestions();
-            }
-            if (testsDB.length === 0) {
-                testsDB = getSampleTests();
-            }
-            saveData();
         }
 
         function escapeHTML(value) {
@@ -9958,10 +10041,18 @@
 
             html += '<div class="options-list">';
             const letters = ['أ', 'ب', 'ج', 'د'];
+            const answered = currentSession.answers[currentSession.currentIndex];
+            const revealed = currentSession.mode === 'practice' && answered !== null;
             q.options.forEach((opt, i) => {
-                const selectedClass = currentSession.answers[currentSession.currentIndex] === i ? 'selected' : '';
+                let stateClass = '';
+                if (revealed) {
+                    if (i === q.correct) stateClass = 'correct';
+                    else if (i === answered) stateClass = 'wrong';
+                } else if (answered === i) {
+                    stateClass = 'selected';
+                }
                 html += `
-                    <div class="option ${selectedClass}" onclick="selectOption(${i})">
+                    <div class="option ${stateClass}" onclick="selectOption(${i})">
                         <span class="option-letter">${letters[i]}</span>
                         <span>${escapeHTML(opt)}</span>
                     </div>
@@ -9970,7 +10061,12 @@
             html += '</div>';
 
             document.getElementById('questionContainer').innerHTML = html;
-            document.getElementById('explanationBox').classList.remove('show');
+            if (revealed) {
+                document.getElementById('explanationText').textContent = q.explanation;
+                document.getElementById('explanationBox').classList.add('show');
+            } else {
+                document.getElementById('explanationBox').classList.remove('show');
+            }
 
             // Update buttons
             document.getElementById('prevBtn').style.display = current > 1 ? 'inline-flex' : 'none';
@@ -9979,8 +10075,15 @@
         }
 
         function selectOption(index) {
+            // في وضع التدريب تُكشف الإجابة الصحيحة بعد أول اختيار،
+            // فيُقفل السؤال لمنع تغيير الإجابة وتضخيم الإحصائيات
+            if (currentSession.mode === 'practice'
+                && currentSession.answers[currentSession.currentIndex] !== null) {
+                return;
+            }
+
             currentSession.answers[currentSession.currentIndex] = index;
-            
+
             const q = currentSession.questions[currentSession.currentIndex];
             const options = document.querySelectorAll('.option');
             
@@ -10125,13 +10228,14 @@
             }
 
             // Update daily stats
-            const today = new Date().toDateString();
+            const today = getTodayKey();
             if (!userProgress.dailyStats[today]) {
                 userProgress.dailyStats[today] = { questions: 0, correct: 0 };
             }
             userProgress.dailyStats[today].questions += results.total;
             userProgress.dailyStats[today].correct += results.correct;
 
+            updateStreak();
             saveData();
             checkAndAwardBadges();
         }
@@ -10228,12 +10332,13 @@
             saveData();
         }
 
+        // يُستدعى عند إكمال تدريب أو اختبار فعلي — لا عند مجرد فتح التطبيق
         function updateStreak() {
-            const today = new Date().toDateString();
-            const yesterday = new Date(Date.now() - 86400000).toDateString();
-            
+            const today = getTodayKey();
+            const yesterday = getTodayKey(new Date(Date.now() - 86400000));
+
             if (userProgress.lastActive === today) {
-                // Already active today
+                // نشط اليوم بالفعل
             } else if (userProgress.lastActive === yesterday) {
                 userProgress.streak++;
                 userProgress.lastActive = today;
@@ -10241,9 +10346,14 @@
                 userProgress.streak = 1;
                 userProgress.lastActive = today;
             }
-            
-            document.getElementById('streakCount').textContent = userProgress.streak;
-            saveData();
+            renderStreak();
+        }
+
+        function renderStreak() {
+            const today = getTodayKey();
+            const yesterday = getTodayKey(new Date(Date.now() - 86400000));
+            const stillActive = userProgress.lastActive === today || userProgress.lastActive === yesterday;
+            document.getElementById('streakCount').textContent = stillActive ? userProgress.streak : 0;
         }
 
         // ==================== Saved Questions ====================
@@ -10420,7 +10530,7 @@
             const last7Days = [];
             
             for (let i = 6; i >= 0; i--) {
-                const date = new Date(Date.now() - i * 86400000).toDateString();
+                const date = getTodayKey(new Date(Date.now() - i * 86400000));
                 const stats = userProgress.dailyStats[date] || { questions: 0, correct: 0 };
                 last7Days.push(stats);
             }
@@ -10510,7 +10620,8 @@
                     document.getElementById('optionD').value.trim()
                 ],
                 correct: parseInt(document.getElementById('qCorrect').value),
-                explanation: document.getElementById('qExplanation').value.trim()
+                explanation: document.getElementById('qExplanation').value.trim(),
+                custom: true
             };
 
             const errors = validateQuestion(newQ);
@@ -10519,7 +10630,8 @@
                 return;
             }
 
-            questionsDB.push(newQ);
+            userContent.customQuestions.push(newQ);
+            questionsDB = buildQuestionsDB();
             saveData();
 
             // Clear form
@@ -10566,7 +10678,16 @@
 
         function deleteQuestion(qId) {
             if (confirm('هل أنت متأكد من حذف هذا السؤال؟')) {
-                questionsDB = questionsDB.filter(q => q.id !== qId);
+                const q = questionsDB.find(x => x.id === qId);
+                if (q && q.custom) {
+                    userContent.customQuestions = userContent.customQuestions.filter(x => x.id !== qId);
+                } else {
+                    if (!userContent.deletedQuestionIds.includes(qId)) {
+                        userContent.deletedQuestionIds.push(qId);
+                    }
+                    delete userContent.questionOverrides[qId];
+                }
+                questionsDB = buildQuestionsDB();
                 saveData();
                 renderQuestionsTable();
             }
@@ -10634,6 +10755,11 @@
             q.correct = updated.correct;
             q.explanation = updated.explanation;
 
+            // تعديل سؤال عينة يُحفظ كتجاوز (override) حتى لا يضيع عند تحديث المحتوى
+            if (!q.custom) {
+                userContent.questionOverrides[q.id] = q;
+            }
+
             saveData();
             closeEditModal();
             renderQuestionsTable();
@@ -10684,14 +10810,16 @@
                 return;
             }
 
-            testsDB.push({
+            userContent.customTests.push({
                 id: Date.now(),
                 name,
                 verbalCount,
                 quantCount,
                 timeLimit,
-                description: `${verbalCount + quantCount} سؤال في ${timeLimit} دقيقة`
+                description: `${verbalCount + quantCount} سؤال في ${timeLimit} دقيقة`,
+                custom: true
             });
+            testsDB = buildTestsDB();
 
             saveData();
             document.getElementById('testName').value = '';
@@ -10715,7 +10843,13 @@
 
         function deleteTest(testId) {
             if (confirm('هل أنت متأكد من حذف هذا الاختبار؟')) {
-                testsDB = testsDB.filter(t => t.id !== testId);
+                const t = testsDB.find(x => x.id === testId);
+                if (t && t.custom) {
+                    userContent.customTests = userContent.customTests.filter(x => x.id !== testId);
+                } else if (!userContent.deletedTestIds.includes(testId)) {
+                    userContent.deletedTestIds.push(testId);
+                }
+                testsDB = buildTestsDB();
                 saveData();
                 renderAdminTests();
             }
@@ -10816,8 +10950,12 @@
         }
 
         // ==================== Daily Challenge ====================
-        function getTodayKey() {
-            return new Date().toISOString().slice(0, 10);
+        // مفتاح تاريخ موحّد بالتوقيت المحلي (YYYY-MM-DD) لكل الإحصائيات اليومية
+        function getTodayKey(date = new Date()) {
+            const y = date.getFullYear();
+            const m = String(date.getMonth() + 1).padStart(2, '0');
+            const d = String(date.getDate()).padStart(2, '0');
+            return `${y}-${m}-${d}`;
         }
 
         function checkDailyChallenge() {
@@ -10951,11 +11089,10 @@
         // ==================== Admin: Backup / Restore / CSV ====================
         function exportAllData() {
             const blob = new Blob([JSON.stringify({
-                questions: questionsDB,
-                tests: testsDB,
+                version: 2,
+                ...userContent,
                 progress: userProgress,
-                exportedAt: new Date().toISOString(),
-                version: '1.0'
+                exportedAt: new Date().toISOString()
             }, null, 2)], { type: 'application/json' });
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
@@ -10990,8 +11127,10 @@
             reader.onload = (e) => {
                 try {
                     const data = JSON.parse(e.target.result);
-                    if (!data || typeof data !== 'object'
-                        || (!Array.isArray(data.questions) && !Array.isArray(data.tests) && !data.progress)) {
+                    const isV2 = data && typeof data === 'object' && data.version >= 2;
+                    const isLegacy = data && typeof data === 'object'
+                        && (Array.isArray(data.questions) || Array.isArray(data.tests) || data.progress);
+                    if (!isV2 && !isLegacy) {
                         showToast('❌ ملف غير صالح: البنية غير معروفة', 'error', 5000);
                         input.value = '';
                         return;
@@ -11001,19 +11140,43 @@
                         return;
                     }
                     let skipped = 0;
-                    if (Array.isArray(data.questions)) {
-                        const valid = data.questions.filter(isValidImportedQuestion);
-                        skipped += data.questions.length - valid.length;
-                        questionsDB = valid;
+                    userContent = {
+                        customQuestions: [], questionOverrides: {},
+                        deletedQuestionIds: [], customTests: [], deletedTestIds: []
+                    };
+                    if (isV2) {
+                        const rawCustomQ = Array.isArray(data.customQuestions) ? data.customQuestions : [];
+                        userContent.customQuestions = rawCustomQ.filter(isValidImportedQuestion).map(q => ({ ...q, custom: true }));
+                        skipped += rawCustomQ.length - userContent.customQuestions.length;
+
+                        const rawOverrides = (data.questionOverrides && typeof data.questionOverrides === 'object') ? data.questionOverrides : {};
+                        for (const [id, q] of Object.entries(rawOverrides)) {
+                            if (isValidImportedQuestion(q)) userContent.questionOverrides[id] = q;
+                            else skipped++;
+                        }
+
+                        userContent.deletedQuestionIds = (Array.isArray(data.deletedQuestionIds) ? data.deletedQuestionIds : []).filter(Number.isFinite);
+                        userContent.deletedTestIds = (Array.isArray(data.deletedTestIds) ? data.deletedTestIds : []).filter(Number.isFinite);
+
+                        const rawTests = Array.isArray(data.customTests) ? data.customTests : [];
+                        userContent.customTests = rawTests.filter(isValidImportedTest).map(t => ({ ...t, custom: true }));
+                        skipped += rawTests.length - userContent.customTests.length;
+
+                        if (data.progress && typeof data.progress === 'object' && !Array.isArray(data.progress)) {
+                            userProgress = { ...userProgress, ...data.progress };
+                        }
+                    } else {
+                        // نسخة احتياطية بالصيغة القديمة (قاعدة كاملة): نستخرج محتوى المستخدم منها
+                        const rawQ = Array.isArray(data.questions) ? data.questions : [];
+                        const validQ = rawQ.filter(isValidImportedQuestion);
+                        skipped += rawQ.length - validQ.length;
+                        const rawT = Array.isArray(data.tests) ? data.tests : [];
+                        const validT = rawT.filter(isValidImportedTest);
+                        skipped += rawT.length - validT.length;
+                        migrateLegacyData({ ...data, questions: validQ, tests: validT });
                     }
-                    if (Array.isArray(data.tests)) {
-                        const valid = data.tests.filter(isValidImportedTest);
-                        skipped += data.tests.length - valid.length;
-                        testsDB = valid;
-                    }
-                    if (data.progress && typeof data.progress === 'object' && !Array.isArray(data.progress)) {
-                        userProgress = { ...userProgress, ...data.progress };
-                    }
+                    questionsDB = buildQuestionsDB();
+                    testsDB = buildTestsDB();
                     saveData();
                     renderQuestionsTable();
                     renderAdminTests();
@@ -11109,15 +11272,17 @@
                             text: r[idx('text')],
                             options: [r[idx('optionA')], r[idx('optionB')], r[idx('optionC')], r[idx('optionD')]],
                             correct: parseInt(r[idx('correct')]),
-                            explanation: idx('explanation') >= 0 ? r[idx('explanation')] : ''
+                            explanation: idx('explanation') >= 0 ? r[idx('explanation')] : '',
+                            custom: true
                         };
                         if (validateQuestion(newQ).length === 0) {
-                            questionsDB.push(newQ);
+                            userContent.customQuestions.push(newQ);
                             added++;
                         } else {
                             skipped++;
                         }
                     }
+                    questionsDB = buildQuestionsDB();
                     saveData();
                     renderQuestionsTable();
                     showToast(`✓ تم استيراد ${added} سؤال${skipped ? ` (تم تخطي ${skipped})` : ''}`, 'success', 4000);
