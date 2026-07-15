@@ -1271,6 +1271,44 @@ textarea:focus-visible {
     background: #2f3344;
 }
 
+/* حالات الخيارات والأسطح الملونة: خلفياتها الفاتحة تجعل النص الفاتح
+   غير مقروء في الوضع الليلي، فتُستبدل بتظليلات شفافة داكنة */
+[data-theme="dark"] .option.selected {
+    background: rgba(77, 171, 217, 0.2);
+    border-color: var(--primary-light);
+}
+
+[data-theme="dark"] .option.correct {
+    background: rgba(39, 174, 96, 0.25);
+    border-color: var(--success);
+}
+
+[data-theme="dark"] .option.wrong {
+    background: rgba(231, 76, 60, 0.25);
+    border-color: var(--danger);
+}
+
+[data-theme="dark"] .sw-card.strength {
+    background: linear-gradient(135deg, rgba(39, 174, 96, 0.2), rgba(39, 174, 96, 0.08));
+}
+
+[data-theme="dark"] .sw-card.weakness {
+    background: linear-gradient(135deg, rgba(231, 76, 60, 0.2), rgba(231, 76, 60, 0.08));
+}
+
+[data-theme="dark"] .explanation-box {
+    background: linear-gradient(135deg, rgba(77, 171, 217, 0.16), rgba(77, 171, 217, 0.06));
+}
+
+[data-theme="dark"] .results-score.excellent { background: linear-gradient(135deg, rgba(39, 174, 96, 0.45), rgba(39, 174, 96, 0.2)); }
+[data-theme="dark"] .results-score.good { background: linear-gradient(135deg, rgba(77, 171, 217, 0.45), rgba(77, 171, 217, 0.2)); }
+[data-theme="dark"] .results-score.average { background: linear-gradient(135deg, rgba(243, 156, 18, 0.45), rgba(243, 156, 18, 0.2)); }
+[data-theme="dark"] .results-score.poor { background: linear-gradient(135deg, rgba(231, 76, 60, 0.45), rgba(231, 76, 60, 0.2)); }
+
+[data-theme="dark"] .difficulty-easy { background: rgba(39, 174, 96, 0.18); color: #58d68d; }
+[data-theme="dark"] .difficulty-medium { background: rgba(243, 156, 18, 0.18); color: #f8c471; }
+[data-theme="dark"] .difficulty-hard { background: rgba(231, 76, 60, 0.18); color: #f1948a; }
+
 /* ==================== Toast Animations ==================== */
 @keyframes toastIn {
     from { opacity: 0; transform: translateY(-20px) scale(0.9); }
