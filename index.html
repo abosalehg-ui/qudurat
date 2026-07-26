@@ -4,9 +4,16 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>قدراتي - منصة التدريب على اختبار القدرات</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700;800&family=Amiri:wght@400;700&display=swap" rel="stylesheet">
+
+    <!-- سياسة أمان المحتوى: لا سكربتات إلا من نفس المصدر (لا onclick مضمّنة
+         في هذا الملف ولا مصادر خارجية)، فأي حقن نصي لا يستطيع تنفيذ كود.
+         'unsafe-inline' مقصورة على الأنماط لأن قوالب العرض تستخدم سمة style. -->
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'">
+    <meta name="referrer" content="strict-origin-when-cross-origin">
+
+    <link rel="preload" href="fonts/tajawal-400-arabic.woff2" as="font" type="font/woff2" crossorigin>
+    <link rel="preload" href="fonts/tajawal-700-arabic.woff2" as="font" type="font/woff2" crossorigin>
+    <link rel="stylesheet" href="fonts.css">
     <link rel="stylesheet" href="styles.css">
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#1a5f7a">
@@ -21,19 +28,22 @@
 
     <!-- Theme & Accessibility Controls -->
     <div class="theme-controls" role="region" aria-label="إعدادات العرض">
-        <button class="theme-btn" id="themeToggle" onclick="toggleTheme()" aria-label="تبديل الوضع الليلي" title="تبديل الوضع الليلي">🌙</button>
-        <button class="theme-btn" onclick="cycleFontSize()" aria-label="تكبير حجم الخط" title="تكبير/تصغير الخط">🔤</button>
+        <button type="button" class="theme-btn" id="themeToggle" data-action="toggle-theme" aria-label="تبديل الوضع الليلي" title="تبديل الوضع الليلي">🌙</button>
+        <button type="button" class="theme-btn" data-action="cycle-font-size" aria-label="تغيير حجم الخط" title="تكبير/تصغير الخط">🔤</button>
     </div>
 
     <!-- Navigation -->
     <nav class="navbar" role="navigation" aria-label="القائمة الرئيسية">
         <div class="nav-container">
             <a href="#home" class="logo">
-                <div class="logo-icon">📚</div>
+                <span class="logo-icon" aria-hidden="true">📚</span>
                 <span>قدراتي</span>
             </a>
 
-            <button class="mobile-menu-btn" onclick="toggleMobileMenu()">☰</button>
+            <button type="button" class="mobile-menu-btn" id="mobileMenuBtn" data-action="toggle-menu"
+                    aria-label="فتح قائمة التنقل" aria-expanded="false" aria-controls="navLinks">
+                <span aria-hidden="true">☰</span>
+            </button>
 
             <div class="nav-links" id="navLinks">
                 <a href="#home" class="nav-link active" data-page="home">الرئيسية</a>
@@ -43,12 +53,11 @@
                 <a href="#solved" class="nav-link" data-page="solved">نماذج محلولة</a>
                 <a href="#saved" class="nav-link" data-page="saved">المحفوظات</a>
                 <a href="#progress" class="nav-link" data-page="progress">تقدمي</a>
-                <a href="#admin" class="nav-link" data-page="admin">لوحة التحكم</a>
             </div>
-            
+
             <div class="nav-stats">
                 <div class="stat-badge">
-                    <span>🔥</span>
+                    <span aria-hidden="true">🔥</span>
                     <span id="streakCount">0</span> يوم متواصل
                 </div>
             </div>
@@ -56,30 +65,30 @@
     </nav>
 
     <!-- Timer -->
-    <div class="timer-container" id="timerContainer">
-        <span class="timer-icon">⏱️</span>
+    <div class="timer-container" id="timerContainer" role="timer" aria-live="off">
+        <span class="timer-icon" aria-hidden="true">⏱️</span>
         <span class="timer-value" id="timerValue">00:00</span>
     </div>
 
     <!-- Main Content -->
     <main class="main-content" id="main-content" role="main">
-        
+
         <!-- Home Page -->
         <div class="page active" id="page-home">
             <div class="hero">
                 <div class="hero-content">
-                    <h1>🎯 استعد لاختبار القدرات بثقة</h1>
+                    <h1><span aria-hidden="true">🎯</span> استعد لاختبار القدرات بثقة</h1>
                     <p>منصتك الشاملة للتدريب على اختبار قياس - أسئلة تفاعلية، تحليل ذكي، ومتابعة دقيقة لتقدمك</p>
-                    <button class="btn btn-primary" onclick="showPage('tests')" style="background: rgba(255,255,255,0.2); backdrop-filter: blur(10px);">
+                    <button type="button" class="btn btn-glass" data-action="page" data-page="tests">
                         ابدأ اختبار تجريبي الآن ←
                     </button>
                     <div class="hero-stats">
                         <div class="hero-stat">
-                            <span class="hero-stat-value" id="totalQuestions">500</span>
+                            <span class="hero-stat-value" id="totalQuestions">0</span>
                             <span class="hero-stat-label">سؤال متنوع</span>
                         </div>
                         <div class="hero-stat">
-                            <span class="hero-stat-value" id="totalTests">4</span>
+                            <span class="hero-stat-value" id="totalTests">0</span>
                             <span class="hero-stat-label">اختبار تجريبي</span>
                         </div>
                         <div class="hero-stat">
@@ -94,242 +103,225 @@
             <div class="daily-challenge-card" id="dailyChallengeCard" role="region" aria-label="تحدي اليوم"></div>
 
             <div class="section-header">
-                <h2 class="section-title"><span>📂</span> الأقسام الرئيسية</h2>
+                <h2 class="section-title"><span aria-hidden="true">📂</span> الأقسام الرئيسية</h2>
             </div>
 
             <div class="cards-grid">
-                <div class="card" onclick="showPage('verbal')">
-                    <div class="card-icon verbal">📖</div>
+                <button type="button" class="card" data-action="page" data-page="verbal">
+                    <span class="card-icon verbal" aria-hidden="true">📖</span>
                     <h3>القسم اللفظي</h3>
                     <p>تناظر لفظي، إكمال جمل، استيعاب مقروء، والخطأ السياقي</p>
-                    <div class="card-meta">
+                    <span class="card-meta">
                         <span class="card-badge">4 فئات</span>
                         <span class="card-badge" id="verbalProgress">0% مكتمل</span>
-                    </div>
-                </div>
+                    </span>
+                </button>
 
-                <div class="card" onclick="showPage('quant')">
-                    <div class="card-icon quant">🔢</div>
+                <button type="button" class="card" data-action="page" data-page="quant">
+                    <span class="card-icon quant" aria-hidden="true">🔢</span>
                     <h3>القسم الكمي</h3>
                     <p>نسب ومعادلات، إحصاء، هندسة، ومقارنات</p>
-                    <div class="card-meta">
+                    <span class="card-meta">
                         <span class="card-badge">5 فئات</span>
                         <span class="card-badge" id="quantProgress">0% مكتمل</span>
-                    </div>
-                </div>
+                    </span>
+                </button>
 
-                <div class="card" onclick="showPage('tests')">
-                    <div class="card-icon test">📝</div>
+                <button type="button" class="card" data-action="page" data-page="tests">
+                    <span class="card-icon test" aria-hidden="true">📝</span>
                     <h3>اختبارات تجريبية</h3>
                     <p>اختبارات كاملة تحاكي اختبار قياس الحقيقي مع تصحيح تلقائي</p>
-                    <div class="card-meta">
+                    <span class="card-meta">
                         <span class="card-badge">مؤقت زمني</span>
                         <span class="card-badge">تقرير أداء</span>
-                    </div>
-                </div>
+                    </span>
+                </button>
 
-                <div class="card" onclick="showPage('solved')">
-                    <div class="card-icon solved">💡</div>
+                <button type="button" class="card" data-action="page" data-page="solved">
+                    <span class="card-icon solved" aria-hidden="true">💡</span>
                     <h3>نماذج محلولة</h3>
                     <p>شروحات تفصيلية خطوة بخطوة لفهم طريقة الحل</p>
-                    <div class="card-meta">
+                    <span class="card-meta">
                         <span class="card-badge">شرح مفصل</span>
                         <span class="card-badge">أمثلة متنوعة</span>
-                    </div>
-                </div>
+                    </span>
+                </button>
             </div>
 
             <!-- Recommended Section -->
             <div class="section-header">
-                <h2 class="section-title"><span>🎯</span> مقترحات لك</h2>
+                <h2 class="section-title"><span aria-hidden="true">🎯</span> مقترحات لك</h2>
             </div>
-            <div class="cards-grid" id="recommendedQuestions">
-                <div class="empty-state">
-                    <div class="empty-state-icon">📊</div>
-                    <p>ابدأ بحل بعض الأسئلة لنقترح لك أسئلة مناسبة لمستواك</p>
-                </div>
-            </div>
+            <div class="cards-grid" id="recommendedQuestions"></div>
         </div>
 
         <!-- Verbal Section Page -->
         <div class="page" id="page-verbal">
-            <span class="back-btn" onclick="showPage('home')">→ العودة للرئيسية</span>
-            
+            <button type="button" class="back-btn" data-action="page" data-page="home">→ العودة للرئيسية</button>
+
             <div class="section-header">
-                <h2 class="section-title"><span>📖</span> القسم اللفظي</h2>
+                <h2 class="section-title"><span aria-hidden="true">📖</span> القسم اللفظي</h2>
             </div>
 
             <div class="sub-categories">
-                <div class="sub-cat-card" onclick="startPractice('verbal', 'analogy')">
-                    <h4>🔄 التناظر اللفظي</h4>
+                <button type="button" class="sub-cat-card" data-action="practice" data-section="verbal" data-subcategory="analogy">
+                    <h3><span aria-hidden="true">🔄</span> التناظر اللفظي</h3>
                     <p>اكتشف العلاقة بين الكلمات</p>
-                    <div class="sub-cat-progress">
-                        <div class="sub-cat-progress-bar" style="width: 0%"></div>
-                    </div>
-                </div>
-                <div class="sub-cat-card" onclick="startPractice('verbal', 'completion')">
-                    <h4>✏️ إكمال الجمل</h4>
+                    <span class="sub-cat-progress"><span class="sub-cat-progress-bar" data-mastery="verbal_analogy"></span></span>
+                    <span class="sub-cat-mastery" data-mastery-label="verbal_analogy">لم تبدأ بعد</span>
+                </button>
+                <button type="button" class="sub-cat-card" data-action="practice" data-section="verbal" data-subcategory="completion">
+                    <h3><span aria-hidden="true">✏️</span> إكمال الجمل</h3>
                     <p>أكمل الجملة بالكلمة المناسبة</p>
-                    <div class="sub-cat-progress">
-                        <div class="sub-cat-progress-bar" style="width: 0%"></div>
-                    </div>
-                </div>
-                <div class="sub-cat-card" onclick="startPractice('verbal', 'reading')">
-                    <h4>📚 الاستيعاب المقروء</h4>
+                    <span class="sub-cat-progress"><span class="sub-cat-progress-bar" data-mastery="verbal_completion"></span></span>
+                    <span class="sub-cat-mastery" data-mastery-label="verbal_completion">لم تبدأ بعد</span>
+                </button>
+                <button type="button" class="sub-cat-card" data-action="practice" data-section="verbal" data-subcategory="reading">
+                    <h3><span aria-hidden="true">📚</span> الاستيعاب المقروء</h3>
                     <p>اقرأ وأجب عن الأسئلة</p>
-                    <div class="sub-cat-progress">
-                        <div class="sub-cat-progress-bar" style="width: 0%"></div>
-                    </div>
-                </div>
-                <div class="sub-cat-card" onclick="startPractice('verbal', 'context')">
-                    <h4>🔍 الخطأ السياقي</h4>
+                    <span class="sub-cat-progress"><span class="sub-cat-progress-bar" data-mastery="verbal_reading"></span></span>
+                    <span class="sub-cat-mastery" data-mastery-label="verbal_reading">لم تبدأ بعد</span>
+                </button>
+                <button type="button" class="sub-cat-card" data-action="practice" data-section="verbal" data-subcategory="context">
+                    <h3><span aria-hidden="true">🔍</span> الخطأ السياقي</h3>
                     <p>حدد الكلمة الخاطئة في السياق</p>
-                    <div class="sub-cat-progress">
-                        <div class="sub-cat-progress-bar" style="width: 0%"></div>
-                    </div>
-                </div>
+                    <span class="sub-cat-progress"><span class="sub-cat-progress-bar" data-mastery="verbal_context"></span></span>
+                    <span class="sub-cat-mastery" data-mastery-label="verbal_context">لم تبدأ بعد</span>
+                </button>
             </div>
         </div>
 
         <!-- Quantitative Section Page -->
         <div class="page" id="page-quant">
-            <span class="back-btn" onclick="showPage('home')">→ العودة للرئيسية</span>
-            
+            <button type="button" class="back-btn" data-action="page" data-page="home">→ العودة للرئيسية</button>
+
             <div class="section-header">
-                <h2 class="section-title"><span>🔢</span> القسم الكمي</h2>
+                <h2 class="section-title"><span aria-hidden="true">🔢</span> القسم الكمي</h2>
             </div>
 
             <div class="sub-categories">
-                <div class="sub-cat-card" onclick="startPractice('quant', 'ratio')">
-                    <h4>📊 النسب والتناسب</h4>
+                <button type="button" class="sub-cat-card" data-action="practice" data-section="quant" data-subcategory="ratio">
+                    <h3><span aria-hidden="true">📊</span> النسب والتناسب</h3>
                     <p>مسائل النسب والمعادلات</p>
-                    <div class="sub-cat-progress">
-                        <div class="sub-cat-progress-bar" style="width: 0%"></div>
-                    </div>
-                </div>
-                <div class="sub-cat-card" onclick="startPractice('quant', 'algebra')">
-                    <h4>🔣 الجبر والمعادلات</h4>
+                    <span class="sub-cat-progress"><span class="sub-cat-progress-bar" data-mastery="quant_ratio"></span></span>
+                    <span class="sub-cat-mastery" data-mastery-label="quant_ratio">لم تبدأ بعد</span>
+                </button>
+                <button type="button" class="sub-cat-card" data-action="practice" data-section="quant" data-subcategory="algebra">
+                    <h3><span aria-hidden="true">🔣</span> الجبر والمعادلات</h3>
                     <p>حل المعادلات الجبرية</p>
-                    <div class="sub-cat-progress">
-                        <div class="sub-cat-progress-bar" style="width: 0%"></div>
-                    </div>
-                </div>
-                <div class="sub-cat-card" onclick="startPractice('quant', 'statistics')">
-                    <h4>📈 الإحصاء</h4>
+                    <span class="sub-cat-progress"><span class="sub-cat-progress-bar" data-mastery="quant_algebra"></span></span>
+                    <span class="sub-cat-mastery" data-mastery-label="quant_algebra">لم تبدأ بعد</span>
+                </button>
+                <button type="button" class="sub-cat-card" data-action="practice" data-section="quant" data-subcategory="statistics">
+                    <h3><span aria-hidden="true">📈</span> الإحصاء</h3>
                     <p>المتوسط والوسيط والمنوال</p>
-                    <div class="sub-cat-progress">
-                        <div class="sub-cat-progress-bar" style="width: 0%"></div>
-                    </div>
-                </div>
-                <div class="sub-cat-card" onclick="startPractice('quant', 'geometry')">
-                    <h4>📐 الهندسة</h4>
+                    <span class="sub-cat-progress"><span class="sub-cat-progress-bar" data-mastery="quant_statistics"></span></span>
+                    <span class="sub-cat-mastery" data-mastery-label="quant_statistics">لم تبدأ بعد</span>
+                </button>
+                <button type="button" class="sub-cat-card" data-action="practice" data-section="quant" data-subcategory="geometry">
+                    <h3><span aria-hidden="true">📐</span> الهندسة</h3>
                     <p>المساحات والزوايا والأشكال</p>
-                    <div class="sub-cat-progress">
-                        <div class="sub-cat-progress-bar" style="width: 0%"></div>
-                    </div>
-                </div>
-                <div class="sub-cat-card" onclick="startPractice('quant', 'comparison')">
-                    <h4>⚖️ المقارنة</h4>
+                    <span class="sub-cat-progress"><span class="sub-cat-progress-bar" data-mastery="quant_geometry"></span></span>
+                    <span class="sub-cat-mastery" data-mastery-label="quant_geometry">لم تبدأ بعد</span>
+                </button>
+                <button type="button" class="sub-cat-card" data-action="practice" data-section="quant" data-subcategory="comparison">
+                    <h3><span aria-hidden="true">⚖️</span> المقارنة</h3>
                     <p>قارن بين القيمتين</p>
-                    <div class="sub-cat-progress">
-                        <div class="sub-cat-progress-bar" style="width: 0%"></div>
-                    </div>
-                </div>
+                    <span class="sub-cat-progress"><span class="sub-cat-progress-bar" data-mastery="quant_comparison"></span></span>
+                    <span class="sub-cat-mastery" data-mastery-label="quant_comparison">لم تبدأ بعد</span>
+                </button>
             </div>
         </div>
 
         <!-- Tests Page -->
         <div class="page" id="page-tests">
-            <span class="back-btn" onclick="showPage('home')">→ العودة للرئيسية</span>
-            
+            <button type="button" class="back-btn" data-action="page" data-page="home">→ العودة للرئيسية</button>
+
             <div class="section-header">
-                <h2 class="section-title"><span>📝</span> الاختبارات التجريبية</h2>
+                <h2 class="section-title"><span aria-hidden="true">📝</span> الاختبارات التجريبية</h2>
             </div>
 
-            <div class="cards-grid" id="testsList">
-                <!-- Tests will be loaded here -->
-            </div>
+            <div class="cards-grid" id="testsList"></div>
         </div>
 
         <!-- Practice Page -->
         <div class="page" id="page-practice">
-            <span class="back-btn" id="practiceBackBtn">→ العودة</span>
-            
+            <button type="button" class="back-btn" id="practiceBackBtn">→ العودة</button>
+
             <div class="progress-container">
-                <div class="progress-bar" id="practiceProgress" style="width: 0%"></div>
+                <div class="progress-bar" id="practiceProgress" role="progressbar"
+                     aria-valuenow="0" aria-valuemin="0" aria-valuemax="100" aria-label="التقدم في الجلسة"></div>
             </div>
 
-            <div class="question-container" id="questionContainer">
-                <!-- Question will be loaded here -->
-            </div>
+            <div class="question-container" id="questionContainer"></div>
 
             <div class="explanation-box" id="explanationBox">
-                <div class="explanation-title">💡 الشرح</div>
+                <div class="explanation-title"><span aria-hidden="true">💡</span> الشرح</div>
                 <p id="explanationText"></p>
             </div>
 
-            <div style="display: flex; gap: 1rem; justify-content: center; margin-top: 1.5rem;">
-                <button class="btn btn-secondary" id="prevBtn" onclick="previousQuestion()">← السابق</button>
-                <button class="btn btn-primary" id="nextBtn" onclick="nextQuestion()">التالي →</button>
-                <button class="btn btn-success" id="finishBtn" onclick="finishPractice()" style="display: none;">إنهاء ✓</button>
+            <div class="practice-nav">
+                <button type="button" class="btn btn-secondary" id="prevBtn" data-action="prev-question">← السابق</button>
+                <button type="button" class="btn btn-primary" id="nextBtn" data-action="next-question">التالي →</button>
+                <button type="button" class="btn btn-success is-hidden" id="finishBtn" data-action="finish-practice">إنهاء ✓</button>
             </div>
         </div>
 
         <!-- Results Page -->
         <div class="page" id="page-results">
-            <div class="results-container" id="resultsContainer">
-                <!-- Results will be loaded here -->
-            </div>
+            <div class="results-container" id="resultsContainer"></div>
         </div>
 
         <!-- Solved Examples Page -->
         <div class="page" id="page-solved">
-            <span class="back-btn" onclick="showPage('home')">→ العودة للرئيسية</span>
-            
+            <button type="button" class="back-btn" data-action="page" data-page="home">→ العودة للرئيسية</button>
+
             <div class="section-header">
-                <h2 class="section-title"><span>💡</span> نماذج محلولة</h2>
+                <h2 class="section-title"><span aria-hidden="true">💡</span> نماذج محلولة</h2>
             </div>
 
-            <div class="admin-tabs">
-                <button class="admin-tab active" onclick="filterSolved('all')">الكل</button>
-                <button class="admin-tab" onclick="filterSolved('verbal')">اللفظي</button>
-                <button class="admin-tab" onclick="filterSolved('quant')">الكمي</button>
+            <div class="admin-tabs" role="tablist" aria-label="تصفية النماذج المحلولة">
+                <button type="button" class="admin-tab active" role="tab" aria-selected="true" data-action="filter-solved" data-filter="all">الكل</button>
+                <button type="button" class="admin-tab" role="tab" aria-selected="false" data-action="filter-solved" data-filter="verbal">اللفظي</button>
+                <button type="button" class="admin-tab" role="tab" aria-selected="false" data-action="filter-solved" data-filter="quant">الكمي</button>
             </div>
 
-            <div id="solvedList">
-                <!-- Solved examples will be loaded here -->
+            <div id="solvedList"></div>
+            <div class="load-more-wrap">
+                <button type="button" class="btn btn-secondary is-hidden" id="solvedMoreBtn" data-action="more-solved">عرض المزيد</button>
             </div>
         </div>
 
         <!-- Saved Questions Page -->
         <div class="page" id="page-saved">
-            <span class="back-btn" onclick="showPage('home')">→ العودة للرئيسية</span>
-            
+            <button type="button" class="back-btn" data-action="page" data-page="home">→ العودة للرئيسية</button>
+
             <div class="section-header">
-                <h2 class="section-title"><span>🔖</span> الأسئلة المحفوظة</h2>
+                <h2 class="section-title"><span aria-hidden="true">🔖</span> الأسئلة المحفوظة</h2>
             </div>
 
-            <div id="savedList">
-                <!-- Saved questions will be loaded here -->
-            </div>
+            <div id="savedList"></div>
         </div>
 
         <!-- Progress Page -->
         <div class="page" id="page-progress">
-            <span class="back-btn" onclick="showPage('home')">→ العودة للرئيسية</span>
+            <button type="button" class="back-btn" data-action="page" data-page="home">→ العودة للرئيسية</button>
 
-            <div class="section-header" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:1rem;">
-                <h2 class="section-title"><span>📊</span> تقدمي وإحصائياتي</h2>
-                <button class="btn btn-primary" onclick="exportProgressReport()" aria-label="تصدير تقرير التقدم كملف PDF">📄 تصدير PDF</button>
+            <div class="section-header">
+                <h2 class="section-title"><span aria-hidden="true">📊</span> تقدمي وإحصائياتي</h2>
+                <div class="header-actions">
+                    <button type="button" class="btn btn-primary" data-action="export-progress">📄 تصدير تقرير</button>
+                    <button type="button" class="btn btn-secondary" data-action="page" data-page="admin">⚙️ لوحة التحكم</button>
+                </div>
             </div>
 
             <!-- Level & Points -->
             <div class="level-display" id="levelDisplay" role="region" aria-label="المستوى والنقاط"></div>
 
             <!-- Badges -->
-            <div class="analysis-section" style="margin-bottom:1.5rem;">
-                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;flex-wrap:wrap;gap:0.5rem;">
-                    <h3>🏆 الشارات</h3>
+            <div class="analysis-section stack-gap">
+                <div class="section-header">
+                    <h3><span aria-hidden="true">🏆</span> الشارات</h3>
                     <span class="card-badge" id="badgesCount">0 / 0</span>
                 </div>
                 <div class="badge-grid" id="badgesContainer" role="list" aria-label="قائمة الشارات"></div>
@@ -337,44 +329,36 @@
 
             <div class="dashboard-grid">
                 <div class="dashboard-card">
-                    <h3>📈 الأداء العام</h3>
-                    <div class="chart-container" id="performanceChart">
-                        <!-- Chart will be rendered here -->
-                    </div>
+                    <h3><span aria-hidden="true">📈</span> نشاط آخر 7 أيام</h3>
+                    <div class="chart-container" id="performanceChart" role="img" aria-label="رسم بياني لنشاط آخر سبعة أيام"></div>
                 </div>
                 <div class="dashboard-card">
-                    <h3>🎯 نسبة الإجابات الصحيحة</h3>
-                    <div id="accuracyStats">
-                        <!-- Stats will be loaded here -->
-                    </div>
+                    <h3><span aria-hidden="true">🎯</span> نسبة الإجابات الصحيحة</h3>
+                    <div id="accuracyStats"></div>
                 </div>
                 <div class="dashboard-card">
-                    <h3>📚 الأسئلة المحلولة</h3>
-                    <div id="questionsStats">
-                        <!-- Stats will be loaded here -->
-                    </div>
+                    <h3><span aria-hidden="true">📚</span> الأسئلة المحلولة</h3>
+                    <div id="questionsStats"></div>
                 </div>
                 <div class="dashboard-card">
-                    <h3>⏱️ الوقت المستغرق</h3>
-                    <div id="timeStats">
-                        <!-- Stats will be loaded here -->
-                    </div>
+                    <h3><span aria-hidden="true">⏱️</span> الاختبارات المكتملة</h3>
+                    <div id="timeStats"></div>
                 </div>
             </div>
 
             <div class="analysis-section">
-                <h3 class="analysis-title">📊 تحليل الأداء</h3>
+                <h3 class="analysis-title"><span aria-hidden="true">📊</span> تحليل الأداء</h3>
                 <div class="strength-weakness">
                     <div class="sw-card strength">
-                        <h4>✅ نقاط القوة</h4>
+                        <h4><span aria-hidden="true">✅</span> نقاط القوة</h4>
                         <ul class="sw-list" id="strengthsList">
-                            <li>⭐ أكمل بعض الاختبارات لمعرفة نقاط قوتك</li>
+                            <li>أكمل بعض الاختبارات لمعرفة نقاط قوتك</li>
                         </ul>
                     </div>
                     <div class="sw-card weakness">
-                        <h4>⚠️ تحتاج تحسين</h4>
+                        <h4><span aria-hidden="true">⚠️</span> تحتاج تحسين</h4>
                         <ul class="sw-list" id="weaknessesList">
-                            <li>📝 أكمل بعض الاختبارات لمعرفة ما تحتاج تحسينه</li>
+                            <li>أكمل بعض الاختبارات لمعرفة ما تحتاج تحسينه</li>
                         </ul>
                     </div>
                 </div>
@@ -383,46 +367,46 @@
 
         <!-- Admin Page -->
         <div class="page" id="page-admin">
-            <span class="back-btn" onclick="showPage('home')">→ العودة للرئيسية</span>
+            <button type="button" class="back-btn" data-action="page" data-page="home">→ العودة للرئيسية</button>
 
-            <div class="section-header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
-                <h2 class="section-title"><span>⚙️</span> لوحة التحكم</h2>
-                <div style="display: flex; gap: 0.5rem;">
-                    <button class="btn btn-sm" onclick="changeAdminPassword()" style="background: var(--light); color: var(--dark);">🔑 تغيير كلمة المرور</button>
-                    <button class="btn btn-sm btn-danger" onclick="logoutAdmin()">🚪 تسجيل خروج</button>
+            <div class="section-header">
+                <h2 class="section-title"><span aria-hidden="true">⚙️</span> لوحة التحكم</h2>
+                <div class="header-actions">
+                    <button type="button" class="btn btn-sm btn-secondary" data-action="change-password">🔑 تغيير كلمة المرور</button>
+                    <button type="button" class="btn btn-sm btn-danger" data-action="logout-admin">🚪 تسجيل خروج</button>
                 </div>
             </div>
 
-            <div class="admin-tabs">
-                <button class="admin-tab active" onclick="showAdminTab('add')">إضافة سؤال</button>
-                <button class="admin-tab" onclick="showAdminTab('manage')">إدارة الأسئلة</button>
-                <button class="admin-tab" onclick="showAdminTab('tests')">إدارة الاختبارات</button>
-                <button class="admin-tab" onclick="showAdminTab('tools')">أدوات</button>
+            <p class="notice notice-warning">
+                <strong>تنبيه:</strong> كلمة المرور هنا تنظيمية لا أمنية — تمنع التعديل العابر على هذا الجهاز فقط.
+                البيانات كلها محفوظة محلياً في متصفحك، ومن يملك وصولاً للجهاز يستطيع بلوغها. لا تستخدم كلمة مرور تستعملها في مكان آخر.
+            </p>
+
+            <div class="admin-tabs" role="tablist" aria-label="أقسام لوحة التحكم">
+                <button type="button" class="admin-tab active" role="tab" aria-selected="true" data-action="admin-tab" data-tab="add">إضافة سؤال</button>
+                <button type="button" class="admin-tab" role="tab" aria-selected="false" data-action="admin-tab" data-tab="manage">إدارة الأسئلة</button>
+                <button type="button" class="admin-tab" role="tab" aria-selected="false" data-action="admin-tab" data-tab="tests">إدارة الاختبارات</button>
+                <button type="button" class="admin-tab" role="tab" aria-selected="false" data-action="admin-tab" data-tab="tools">أدوات</button>
             </div>
 
             <!-- Add Question Form -->
             <div class="admin-form" id="adminAdd">
-                <h3 style="margin-bottom: 1.5rem;">➕ إضافة سؤال جديد</h3>
-                
+                <h3 class="stack-gap">➕ إضافة سؤال جديد</h3>
+
                 <div class="form-row">
                     <div class="form-group">
-                        <label class="form-label">القسم</label>
-                        <select class="form-select" id="qSection" onchange="updateSubcategories()">
+                        <label class="form-label" for="qSection">القسم</label>
+                        <select class="form-select" id="qSection" data-change="update-subcategories">
                             <option value="verbal">اللفظي</option>
                             <option value="quant">الكمي</option>
                         </select>
                     </div>
                     <div class="form-group">
-                        <label class="form-label">الفئة الفرعية</label>
-                        <select class="form-select" id="qSubcategory">
-                            <option value="analogy">التناظر اللفظي</option>
-                            <option value="completion">إكمال الجمل</option>
-                            <option value="reading">الاستيعاب المقروء</option>
-                            <option value="context">الخطأ السياقي</option>
-                        </select>
+                        <label class="form-label" for="qSubcategory">الفئة الفرعية</label>
+                        <select class="form-select" id="qSubcategory"></select>
                     </div>
                     <div class="form-group">
-                        <label class="form-label">مستوى الصعوبة</label>
+                        <label class="form-label" for="qDifficulty">مستوى الصعوبة</label>
                         <select class="form-select" id="qDifficulty">
                             <option value="easy">سهل</option>
                             <option value="medium">متوسط</option>
@@ -432,30 +416,30 @@
                 </div>
 
                 <div class="form-group">
-                    <label class="form-label">نص السياق (اختياري - للاستيعاب المقروء)</label>
+                    <label class="form-label" for="qContext">نص السياق (اختياري - للاستيعاب المقروء)</label>
                     <textarea class="form-textarea" id="qContext" placeholder="أدخل نص القراءة هنا..."></textarea>
                 </div>
 
                 <div class="form-group">
-                    <label class="form-label">نص السؤال</label>
+                    <label class="form-label" for="qText">نص السؤال</label>
                     <textarea class="form-textarea" id="qText" placeholder="أدخل نص السؤال..."></textarea>
                 </div>
 
-                <div class="form-group">
-                    <label class="form-label">الخيارات</label>
+                <fieldset class="form-group form-fieldset">
+                    <legend class="form-label">الخيارات</legend>
                     <div class="form-row">
-                        <input type="text" class="form-input" id="optionA" placeholder="أ) الخيار الأول">
-                        <input type="text" class="form-input" id="optionB" placeholder="ب) الخيار الثاني">
+                        <input type="text" class="form-input" id="optionA" aria-label="الخيار الأول (أ)" placeholder="أ) الخيار الأول">
+                        <input type="text" class="form-input" id="optionB" aria-label="الخيار الثاني (ب)" placeholder="ب) الخيار الثاني">
                     </div>
-                    <div class="form-row" style="margin-top: 0.5rem;">
-                        <input type="text" class="form-input" id="optionC" placeholder="ج) الخيار الثالث">
-                        <input type="text" class="form-input" id="optionD" placeholder="د) الخيار الرابع">
+                    <div class="form-row form-row-spaced">
+                        <input type="text" class="form-input" id="optionC" aria-label="الخيار الثالث (ج)" placeholder="ج) الخيار الثالث">
+                        <input type="text" class="form-input" id="optionD" aria-label="الخيار الرابع (د)" placeholder="د) الخيار الرابع">
                     </div>
-                </div>
+                </fieldset>
 
                 <div class="form-row">
                     <div class="form-group">
-                        <label class="form-label">الإجابة الصحيحة</label>
+                        <label class="form-label" for="qCorrect">الإجابة الصحيحة</label>
                         <select class="form-select" id="qCorrect">
                             <option value="0">أ</option>
                             <option value="1">ب</option>
@@ -466,125 +450,137 @@
                 </div>
 
                 <div class="form-group">
-                    <label class="form-label">الشرح التفصيلي</label>
+                    <label class="form-label" for="qExplanation">الشرح التفصيلي</label>
                     <textarea class="form-textarea" id="qExplanation" placeholder="اشرح طريقة الحل خطوة بخطوة..."></textarea>
                 </div>
 
-                <button class="btn btn-success btn-block" onclick="addQuestion()">
+                <div class="form-errors is-hidden" id="addQuestionErrors" role="alert"></div>
+
+                <button type="button" class="btn btn-success btn-block" data-action="add-question">
                     ✓ حفظ السؤال
                 </button>
             </div>
 
             <!-- Manage Questions -->
-            <div class="admin-form" id="adminManage" style="display: none;">
-                <h3 style="margin-bottom: 1.5rem;">📋 إدارة الأسئلة</h3>
-                
-                <div class="form-row" style="margin-bottom: 1.5rem;">
-                    <select class="form-select" id="filterSection" onchange="filterQuestions()">
-                        <option value="all">كل الأقسام</option>
-                        <option value="verbal">اللفظي</option>
-                        <option value="quant">الكمي</option>
-                    </select>
-                    <select class="form-select" id="filterDifficulty" onchange="filterQuestions()">
-                        <option value="all">كل المستويات</option>
-                        <option value="easy">سهل</option>
-                        <option value="medium">متوسط</option>
-                        <option value="hard">صعب</option>
-                    </select>
+            <div class="admin-form is-hidden" id="adminManage">
+                <h3 class="stack-gap">📋 إدارة الأسئلة</h3>
+
+                <div class="form-row stack-gap">
+                    <div class="form-group">
+                        <label class="form-label" for="filterSection">القسم</label>
+                        <select class="form-select" id="filterSection" data-change="filter-questions">
+                            <option value="all">كل الأقسام</option>
+                            <option value="verbal">اللفظي</option>
+                            <option value="quant">الكمي</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="filterDifficulty">الصعوبة</label>
+                        <select class="form-select" id="filterDifficulty" data-change="filter-questions">
+                            <option value="all">كل المستويات</option>
+                            <option value="easy">سهل</option>
+                            <option value="medium">متوسط</option>
+                            <option value="hard">صعب</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="filterSearch">بحث في النص</label>
+                        <input type="search" class="form-input" id="filterSearch" data-change="filter-questions" placeholder="اكتب كلمة للبحث...">
+                    </div>
                 </div>
 
-                <div style="overflow-x: auto;">
-                    <table class="questions-table" id="questionsTable">
+                <div class="table-scroll">
+                    <table class="questions-table">
                         <thead>
                             <tr>
-                                <th>#</th>
-                                <th>السؤال</th>
-                                <th>القسم</th>
-                                <th>الصعوبة</th>
-                                <th>إجراءات</th>
+                                <th scope="col">#</th>
+                                <th scope="col">السؤال</th>
+                                <th scope="col">القسم</th>
+                                <th scope="col">الصعوبة</th>
+                                <th scope="col">إجراءات</th>
                             </tr>
                         </thead>
-                        <tbody id="questionsTableBody">
-                            <!-- Questions will be loaded here -->
-                        </tbody>
+                        <tbody id="questionsTableBody"></tbody>
                     </table>
                 </div>
+
+                <div class="pagination" id="questionsPagination"></div>
             </div>
 
             <!-- Manage Tests -->
-            <div class="admin-form" id="adminTests" style="display: none;">
-                <h3 style="margin-bottom: 1.5rem;">📝 إدارة الاختبارات</h3>
-                
+            <div class="admin-form is-hidden" id="adminTests">
+                <h3 class="stack-gap">📝 إدارة الاختبارات</h3>
+
                 <div class="form-group">
-                    <label class="form-label">اسم الاختبار</label>
+                    <label class="form-label" for="testName">اسم الاختبار</label>
                     <input type="text" class="form-input" id="testName" placeholder="مثال: اختبار تجريبي 1">
                 </div>
 
                 <div class="form-row">
                     <div class="form-group">
-                        <label class="form-label">عدد الأسئلة اللفظية</label>
+                        <label class="form-label" for="testVerbalCount">عدد الأسئلة اللفظية</label>
                         <input type="number" class="form-input" id="testVerbalCount" value="10" min="0">
                     </div>
                     <div class="form-group">
-                        <label class="form-label">عدد الأسئلة الكمية</label>
+                        <label class="form-label" for="testQuantCount">عدد الأسئلة الكمية</label>
                         <input type="number" class="form-input" id="testQuantCount" value="10" min="0">
                     </div>
                     <div class="form-group">
-                        <label class="form-label">الوقت (بالدقائق)</label>
+                        <label class="form-label" for="testTime">الوقت (بالدقائق)</label>
                         <input type="number" class="form-input" id="testTime" value="30" min="1">
                     </div>
                 </div>
 
-                <button class="btn btn-success" onclick="createTest()">
+                <div class="form-errors is-hidden" id="createTestErrors" role="alert"></div>
+
+                <button type="button" class="btn btn-success" data-action="create-test">
                     ✓ إنشاء اختبار
                 </button>
 
-                <h4 style="margin: 2rem 0 1rem;">الاختبارات الحالية</h4>
-                <div id="adminTestsList">
-                    <!-- Tests will be loaded here -->
-                </div>
+                <h4 class="stack-gap-lg">الاختبارات الحالية</h4>
+                <div id="adminTestsList"></div>
             </div>
 
             <!-- Tools: Backup / CSV -->
-            <div class="admin-form" id="adminTools" style="display: none;">
-                <h3 style="margin-bottom: 1.5rem;">🛠️ الأدوات</h3>
+            <div class="admin-form is-hidden" id="adminTools">
+                <h3 class="stack-gap">🛠️ الأدوات</h3>
 
-                <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:1rem;margin-bottom:2rem;">
-                    <div style="padding:1.5rem;background:var(--light);border-radius:12px;">
-                        <h4 style="margin-bottom:0.75rem;">💾 نسخة احتياطية</h4>
-                        <p style="color:var(--gray);font-size:0.9rem;margin-bottom:1rem;">تصدير كامل البيانات (أسئلة، اختبارات، تقدم) كملف JSON</p>
-                        <button class="btn btn-primary btn-block" onclick="exportAllData()">⬇️ تصدير نسخة احتياطية</button>
+                <div class="tools-grid">
+                    <div class="tool-card">
+                        <h4>💾 نسخة احتياطية</h4>
+                        <p>تصدير كامل البيانات (أسئلة، اختبارات، تقدم) كملف JSON</p>
+                        <button type="button" class="btn btn-primary btn-block" data-action="export-all">⬇️ تصدير نسخة احتياطية</button>
                     </div>
 
-                    <div style="padding:1.5rem;background:var(--light);border-radius:12px;">
-                        <h4 style="margin-bottom:0.75rem;">📂 استعادة البيانات</h4>
-                        <p style="color:var(--gray);font-size:0.9rem;margin-bottom:1rem;">استعادة من ملف JSON سابق (سيستبدل البيانات الحالية)</p>
-                        <label class="btn btn-success btn-block" style="cursor:pointer;text-align:center;">
+                    <div class="tool-card">
+                        <h4>📂 استعادة البيانات</h4>
+                        <p>استعادة من ملف JSON سابق (سيستبدل البيانات الحالية)</p>
+                        <label class="btn btn-success btn-block btn-file">
                             ⬆️ اختر ملف JSON
-                            <input type="file" accept=".json" onchange="importAllData(this)" style="display:none;">
+                            <input type="file" accept=".json,application/json" id="importJsonInput" data-change="import-json" class="visually-hidden">
                         </label>
                     </div>
 
-                    <div style="padding:1.5rem;background:var(--light);border-radius:12px;">
-                        <h4 style="margin-bottom:0.75rem;">📊 تصدير الأسئلة CSV</h4>
-                        <p style="color:var(--gray);font-size:0.9rem;margin-bottom:1rem;">تنزيل جميع الأسئلة في ملف Excel/CSV</p>
-                        <button class="btn btn-primary btn-block" onclick="exportQuestionsCSV()">⬇️ تصدير CSV</button>
+                    <div class="tool-card">
+                        <h4>📊 تصدير الأسئلة CSV</h4>
+                        <p>تنزيل جميع الأسئلة في ملف Excel/CSV</p>
+                        <button type="button" class="btn btn-primary btn-block" data-action="export-csv">⬇️ تصدير CSV</button>
                     </div>
 
-                    <div style="padding:1.5rem;background:var(--light);border-radius:12px;">
-                        <h4 style="margin-bottom:0.75rem;">📥 استيراد أسئلة CSV</h4>
-                        <p style="color:var(--gray);font-size:0.9rem;margin-bottom:1rem;">إضافة أسئلة دفعة واحدة من ملف CSV</p>
-                        <label class="btn btn-success btn-block" style="cursor:pointer;text-align:center;">
+                    <div class="tool-card">
+                        <h4>📥 استيراد أسئلة CSV</h4>
+                        <p>إضافة أسئلة دفعة واحدة من ملف CSV</p>
+                        <label class="btn btn-success btn-block btn-file">
                             ⬆️ اختر ملف CSV
-                            <input type="file" accept=".csv" onchange="importQuestionsCSV(this)" style="display:none;">
+                            <input type="file" accept=".csv,text/csv" id="importCsvInput" data-change="import-csv" class="visually-hidden">
                         </label>
                     </div>
                 </div>
 
-                <div style="padding:1rem;background:rgba(243, 156, 18, 0.1);border-right:4px solid var(--warning);border-radius:8px;">
+                <div class="notice notice-warning">
                     <strong>تنسيق ملف CSV المطلوب:</strong><br>
-                    <code style="font-size:0.85rem;">id, section, subcategory, difficulty, text, optionA, optionB, optionC, optionD, correct, explanation</code><br>
-                    <small style="color:var(--gray);">section: verbal أو quant • difficulty: easy/medium/hard • correct: 0-3</small>
+                    <code>id, section, subcategory, difficulty, text, optionA, optionB, optionC, optionD, correct, explanation</code><br>
+                    <small>section: verbal أو quant • subcategory: من فئات القسم • difficulty: easy/medium/hard • correct: 0-3</small>
                 </div>
             </div>
         </div>
@@ -599,25 +595,64 @@
                 <a href="#verbal">اللفظي</a>
                 <a href="#quant">الكمي</a>
                 <a href="#tests">الاختبارات</a>
-                <a href="#admin">لوحة التحكم</a>
+                <a href="#progress">تقدمي</a>
             </div>
             <p>تطوير: <strong>عبدالكريم العبود</strong> | <a href="mailto:abo.saleh.g@gmail.com">abo.saleh.g@gmail.com</a></p>
-            <p style="margin-top: 0.5rem; opacity: 0.7;">© 2024 قدراتي - جميع الحقوق محفوظة</p>
+            <p class="footer-copy">© 2024 قدراتي - جميع الحقوق محفوظة</p>
         </div>
     </footer>
 
     <!-- Edit Question Modal -->
     <div class="modal" id="editModal">
-        <div class="modal-content">
+        <div class="modal-content" role="dialog" aria-modal="true" aria-labelledby="editModalTitle">
             <div class="modal-header">
-                <h3>تعديل السؤال</h3>
-                <button class="modal-close" onclick="closeEditModal()">×</button>
+                <h3 id="editModalTitle">تعديل السؤال</h3>
+                <button type="button" class="modal-close" data-action="close-modal" aria-label="إغلاق نافذة التعديل">×</button>
             </div>
-            <div id="editModalContent">
-                <!-- Edit form will be loaded here -->
+            <div id="editModalContent"></div>
+        </div>
+    </div>
+
+    <!-- Password Prompt Modal -->
+    <div class="modal" id="passwordModal">
+        <div class="modal-content modal-sm" role="dialog" aria-modal="true" aria-labelledby="passwordModalTitle">
+            <div class="modal-header">
+                <h3 id="passwordModalTitle">لوحة التحكم محمية</h3>
+                <button type="button" class="modal-close" data-action="close-password" aria-label="إلغاء">×</button>
+            </div>
+            <form id="passwordForm">
+                <p class="modal-intro" id="passwordModalIntro"></p>
+                <div class="form-group">
+                    <label class="form-label" for="passwordInput1" id="passwordLabel1">كلمة المرور</label>
+                    <input type="password" class="form-input" id="passwordInput1" autocomplete="current-password">
+                </div>
+                <div class="form-group is-hidden" id="passwordField2">
+                    <label class="form-label" for="passwordInput2" id="passwordLabel2">تأكيد كلمة المرور</label>
+                    <input type="password" class="form-input" id="passwordInput2" autocomplete="new-password">
+                </div>
+                <div class="form-errors is-hidden" id="passwordError" role="alert"></div>
+                <button type="submit" class="btn btn-primary btn-block">تأكيد</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Confirm Modal -->
+    <div class="modal" id="confirmModal">
+        <div class="modal-content modal-sm" role="alertdialog" aria-modal="true" aria-labelledby="confirmTitle" aria-describedby="confirmMessage">
+            <div class="modal-header">
+                <h3 id="confirmTitle">تأكيد</h3>
+                <button type="button" class="modal-close" data-action="confirm-cancel" aria-label="إلغاء">×</button>
+            </div>
+            <p id="confirmMessage" class="modal-intro"></p>
+            <div class="modal-actions">
+                <button type="button" class="btn btn-secondary" data-action="confirm-cancel">إلغاء</button>
+                <button type="button" class="btn btn-danger" id="confirmOkBtn" data-action="confirm-ok">تأكيد</button>
             </div>
         </div>
     </div>
+
+    <!-- Toasts -->
+    <div id="toastContainer" class="toast-container" aria-live="polite" aria-atomic="false"></div>
 
     <script src="app-core.js"></script>
     <script src="questions.js"></script>

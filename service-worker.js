@@ -1,8 +1,11 @@
-const CACHE_NAME = 'qudurat-v2';
+// نسخة الكاش تتغيّر مع كل إصدار يغيّر الأصول — activate يحذف ما سواها
+const CACHE_NAME = 'qudurat-v3';
+
 const ASSETS = [
   './',
   './index.html',
   './styles.css',
+  './fonts.css',
   './app-core.js',
   './questions.js',
   './app.js',
@@ -10,7 +13,22 @@ const ASSETS = [
   './icon.svg',
   './icon-180.png',
   './icon-512.png',
-  './icon-maskable-512.png'
+  './icon-maskable-512.png',
+  // الخطوط جزء من الأصول: بدونها يسقط نص الاستيعاب المقروء إلى خط النظام
+  './fonts/tajawal-300-arabic.woff2',
+  './fonts/tajawal-300-latin.woff2',
+  './fonts/tajawal-400-arabic.woff2',
+  './fonts/tajawal-400-latin.woff2',
+  './fonts/tajawal-500-arabic.woff2',
+  './fonts/tajawal-500-latin.woff2',
+  './fonts/tajawal-700-arabic.woff2',
+  './fonts/tajawal-700-latin.woff2',
+  './fonts/tajawal-800-arabic.woff2',
+  './fonts/tajawal-800-latin.woff2',
+  './fonts/amiri-400-arabic.woff2',
+  './fonts/amiri-400-latin.woff2',
+  './fonts/amiri-700-arabic.woff2',
+  './fonts/amiri-700-latin.woff2'
 ];
 
 self.addEventListener('install', (event) => {
@@ -31,18 +49,16 @@ self.addEventListener('fetch', (event) => {
   const { request } = event;
   if (request.method !== 'GET') return;
 
+  // لم يعد التطبيق يطلب أي شيء من نطاق آخر (الخطوط صارت محلية)،
+  // فما جاء من خارج المصدر يُترك للشبكة بلا تدخّل ولا تخزين.
   const url = new URL(request.url);
-  if (url.origin !== self.location.origin) {
-    event.respondWith(
-      fetch(request).catch(() => caches.match(request))
-    );
-    return;
-  }
+  if (url.origin !== self.location.origin) return;
 
   event.respondWith(
     caches.match(request).then((cached) => {
       const networkFetch = fetch(request).then((response) => {
-        if (response && response.status === 200) {
+        // لا نخزّن إلا الاستجابات الأساسية السليمة
+        if (response && response.status === 200 && response.type === 'basic') {
           const clone = response.clone();
           caches.open(CACHE_NAME).then((cache) => cache.put(request, clone));
         }
