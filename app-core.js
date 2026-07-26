@@ -231,6 +231,115 @@
         return [...weak, ...untried, ...tried.filter(c => c.accuracy >= 0.7)].slice(0, limit);
     }
 
+    // ==================== بناء البيانات (نقي — يُمرَّر له كل ما يحتاجه) ====================
+    const EMPTY_USER_CONTENT = {
+        customQuestions: [],      // أسئلة أضافها المشرف أو استُوردت
+        questionOverrides: {},    // تعديلات المشرف على أسئلة العينة (id -> سؤال)
+        deletedQuestionIds: [],   // أسئلة عينة حذفها المشرف
+        customTests: [],
+        deletedTestIds: []
+    };
+
+    function emptyUserContent() {
+        return { ...EMPTY_USER_CONTENT, questionOverrides: {}, customQuestions: [], deletedQuestionIds: [], customTests: [], deletedTestIds: [] };
+    }
+
+    function applyStoredContent(data) {
+        return {
+            customQuestions: Array.isArray(data.customQuestions) ? data.customQuestions : [],
+            questionOverrides: (data.questionOverrides && typeof data.questionOverrides === 'object' && !Array.isArray(data.questionOverrides)) ? data.questionOverrides : {},
+            deletedQuestionIds: Array.isArray(data.deletedQuestionIds) ? data.deletedQuestionIds.filter(Number.isFinite) : [],
+            customTests: Array.isArray(data.customTests) ? data.customTests : [],
+            deletedTestIds: Array.isArray(data.deletedTestIds) ? data.deletedTestIds.filter(Number.isFinite) : []
+        };
+    }
+
+    function buildQuestionsDB(sampleQuestions, userContent) {
+        const deleted = new Set(userContent.deletedQuestionIds);
+        const merged = [];
+        for (const q of sampleQuestions) {
+            if (deleted.has(q.id)) continue;
+            merged.push(userContent.questionOverrides[q.id] || q);
+        }
+        return merged.concat(userContent.customQuestions);
+    }
+
+    function buildTestsDB(sampleTests, userContent) {
+        const deleted = new Set(userContent.deletedTestIds);
+        return sampleTests.filter(t => !deleted.has(t.id)).concat(userContent.customTests);
+    }
+
+    // الصيغة القديمة كانت تخزّن قاعدة الأسئلة كاملة؛ نستخرج منها محتوى
+    // المستخدم فقط. لا نستنتج الحذف من الغياب: بيانات إصدار أقدم قد
+    // تنقصها أسئلة أُضيفت لاحقاً، واعتبارها محذوفة يمنع وصولها نهائياً.
+    function migrateLegacyData(data, sampleQuestions, sampleTests) {
+        const userContent = emptyUserContent();
+        let progress = null;
+
+        const sameQuestion = (a, b) =>
+            a.text === b.text && a.section === b.section && a.subcategory === b.subcategory &&
+            a.difficulty === b.difficulty && a.correct === b.correct &&
+            (a.context || null) === (b.context || null) && (a.explanation || '') === (b.explanation || '') &&
+            JSON.stringify(a.options) === JSON.stringify(b.options);
+
+        if (Array.isArray(data.questions)) {
+            const sampleById = new Map(sampleQuestions.map(q => [q.id, q]));
+            for (const q of data.questions) {
+                if (!q || typeof q !== 'object') continue;
+                const sample = sampleById.get(q.id);
+                if (!sample) {
+                    userContent.customQuestions.push({ ...q, custom: true });
+                } else if (!sameQuestion(q, sample)) {
+                    userContent.questionOverrides[q.id] = q;
+                }
+            }
+        }
+        if (Array.isArray(data.tests)) {
+            const sampleTestIds = new Set(sampleTests.map(t => t.id));
+            for (const t of data.tests) {
+                if (!t || typeof t !== 'object') continue;
+                if (!sampleTestIds.has(t.id)) userContent.customTests.push({ ...t, custom: true });
+            }
+        }
+        if (data.progress && typeof data.progress === 'object' && !Array.isArray(data.progress)) {
+            const p = { ...data.progress };
+            // توحيد مفاتيح التواريخ على الصيغة الجديدة (YYYY-MM-DD محلية)
+            if (p.lastActive) {
+                const d = new Date(p.lastActive);
+                if (!isNaN(d)) p.lastActive = getTodayKey(d);
+            }
+            if (p.dailyStats && typeof p.dailyStats === 'object') {
+                const converted = {};
+                for (const [key, val] of Object.entries(p.dailyStats)) {
+                    const d = new Date(key);
+                    converted[isNaN(d) ? key : getTodayKey(d)] = val;
+                }
+                p.dailyStats = converted;
+            }
+            progress = p;
+        }
+        return { userContent, progress };
+    }
+
+    // سجل النتائج ينمو بلا حد ويُسلسَل عند كل حفظ — نُبقي الأحدث فقط.
+    const MAX_TEST_RESULTS = 100;
+    const MAX_DAILY_STATS_DAYS = 400;
+
+    function pruneProgress(progress) {
+        if (Array.isArray(progress.testResults) && progress.testResults.length > MAX_TEST_RESULTS) {
+            progress.testResults = progress.testResults.slice(-MAX_TEST_RESULTS);
+        }
+        if (progress.dailyStats && typeof progress.dailyStats === 'object') {
+            const keys = Object.keys(progress.dailyStats).sort();
+            if (keys.length > MAX_DAILY_STATS_DAYS) {
+                const kept = {};
+                for (const k of keys.slice(-MAX_DAILY_STATS_DAYS)) kept[k] = progress.dailyStats[k];
+                progress.dailyStats = kept;
+            }
+        }
+        return progress;
+    }
+
     function calculateSessionResults(session) {
         let correct = 0;
         let wrong = 0;
@@ -300,6 +409,13 @@
         sumCategoryAttempts,
         getCategoryMastery,
         getRecommendedCategories,
+        emptyUserContent,
+        applyStoredContent,
+        buildQuestionsDB,
+        buildTestsDB,
+        migrateLegacyData,
+        pruneProgress,
+        MAX_TEST_RESULTS,
         calculateSessionResults
     };
 
