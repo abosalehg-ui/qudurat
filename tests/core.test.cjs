@@ -50,6 +50,10 @@ test('getLevelProgress: نسبة التقدم داخل المستوى', () => {
 
 // ---------- validateQuestion ----------
 const validQ = {
+    id: 9001,
+    section: 'verbal',
+    subcategory: 'analogy',
+    difficulty: 'easy',
     text: 'سؤال صالح للاختبار',
     options: ['أ', 'ب', 'ج', 'د'],
     correct: 2,
@@ -79,7 +83,7 @@ test('isValidImportedQuestion يرفض البنى المشوهة ويقبل ال
 });
 
 test('isValidImportedTest يتحقق من الاسم والأعداد والوقت', () => {
-    const validT = { name: 'اختبار', verbalCount: 5, quantCount: 5, timeLimit: 10 };
+    const validT = { id: 9001, name: 'اختبار', verbalCount: 5, quantCount: 5, timeLimit: 10 };
     assert.strictEqual(core.isValidImportedTest(validT), true);
     assert.strictEqual(core.isValidImportedTest({ ...validT, name: '' }), false);
     assert.strictEqual(core.isValidImportedTest({ ...validT, verbalCount: 0, quantCount: 0 }), false);
