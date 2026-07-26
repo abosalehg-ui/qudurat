@@ -32,6 +32,17 @@ const GENERIC_EXPLANATIONS = [
 const MIN_EXPLANATION_LENGTH = 25;
 const MIN_READING_CONTEXT = 200;
 
+// يقيّم الخيار العددي/الكسري إلى رقم؛ يعيد null للنصوص الوصفية (مثل «الأولى أكبر»)
+function numericValue(raw) {
+    let s = String(raw ?? '').replace(/[٠-٩]/g, d => '٠١٢٣٤٥٦٧٨٩'.indexOf(d)).replace(/%/g, '').trim();
+    if (/^-?\d+\s*\/\s*-?\d+$/.test(s)) {
+        const [a, b] = s.split('/').map(Number);
+        return b === 0 ? null : a / b;
+    }
+    if (/^-?\d+(\.\d+)?$/.test(s)) return parseFloat(s);
+    return null;
+}
+
 const errors = [];
 const seenIds = new Set();
 const seenTexts = new Map();
@@ -67,6 +78,16 @@ for (const q of questions) {
     } else {
         if (q.options.some(o => !String(o ?? '').trim())) errors.push(`${label}: خيار فارغ`);
         if (new Set(q.options.map(o => String(o).trim())).size !== 4) errors.push(`${label}: خيارات مكررة`);
+        // خياران مختلفان نصاً قد يتساويان قيمةً (مثل «1/2» و«2/4»)، فيصير للسؤال
+        // إجابتان صحيحتان. نكشفه بتقييم الخيارات الرقمية/الكسرية عددياً.
+        const nums = q.options.map(numericValue);
+        for (let a = 0; a < nums.length; a++) {
+            for (let b = a + 1; b < nums.length; b++) {
+                if (nums[a] !== null && nums[b] !== null && Math.abs(nums[a] - nums[b]) < 1e-9) {
+                    errors.push(`${label}: خياران متساويان قيمةً («${q.options[a]}» = «${q.options[b]}») — إجابتان صحيحتان`);
+                }
+            }
+        }
     }
     if (!Number.isInteger(q.correct) || q.correct < 0 || q.correct > 3) {
         errors.push(`${label}: مؤشر الإجابة الصحيحة غير صالح (${q.correct})`);
