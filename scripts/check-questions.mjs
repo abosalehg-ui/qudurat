@@ -30,6 +30,7 @@ const GENERIC_EXPLANATIONS = [
     'مقارنة رياضية'
 ];
 const MIN_EXPLANATION_LENGTH = 25;
+const MIN_READING_CONTEXT = 200;
 
 const errors = [];
 const seenIds = new Set();
@@ -70,7 +71,27 @@ for (const q of questions) {
     if (!Number.isInteger(q.correct) || q.correct < 0 || q.correct > 3) {
         errors.push(`${label}: مؤشر الإجابة الصحيحة غير صالح (${q.correct})`);
     }
-    if (q.subcategory === 'reading' && !q.context) errors.push(`${label}: سؤال استيعاب مقروء بلا نص سياق`);
+    // «كل ما سبق» ليست خياراً في التناظر اللفظي بامتحان قياس (المطلوب انتقاء
+    // الزوج الأوحد المطابق)، ووجودها يتيح التخمين بلا قراءة. تُمنع نهائياً هنا.
+    if (q.subcategory === 'analogy' && Array.isArray(q.options)
+        && q.options.some(o => /كل ما سبق/.test(String(o)))) {
+        errors.push(`${label}: «كل ما سبق» غير مسموحة في التناظر اللفظي — استبدلها بزوج له علاقة مختلفة`);
+    }
+    // في الإكمال تُنتج «كل ما سبق» جملة مكسورة عند وضعها في الفراغ، فتُمنع كإجابة
+    if (q.subcategory === 'completion' && Array.isArray(q.options)
+        && Number.isInteger(q.correct) && q.options[q.correct]
+        && /كل ما سبق/.test(String(q.options[q.correct]))) {
+        errors.push(`${label}: «كل ما سبق» لا تصلح إجابة إكمال (تكسر الجملة عند التعويض)`);
+    }
+
+    if (q.subcategory === 'reading') {
+        if (!q.context) {
+            errors.push(`${label}: سؤال استيعاب مقروء بلا نص سياق`);
+        } else if (String(q.context).trim().length < MIN_READING_CONTEXT) {
+            // نص أقصر من فقرة لا يدرّب على تتبّع فكرة عبر النص كما في قياس
+            errors.push(`${label}: نص الاستيعاب قصير (${String(q.context).trim().length} حرفاً، الحد الأدنى ${MIN_READING_CONTEXT})`);
+        }
+    }
 
     const explanation = String(q.explanation || '').trim();
     if (!explanation) {
