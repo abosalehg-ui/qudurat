@@ -2685,7 +2685,7 @@ function getSampleQuestions() {
         "section": "quant",
         "subcategory": "ratio",
         "difficulty": "hard",
-        "text": "1000 ريال بفائدة 5% لـ 3 سنوات، المبلغ النهائي؟",
+        "text": "1000 ريال بفائدة بسيطة 5% سنوياً لـ 3 سنوات، المبلغ النهائي؟",
         "options": ["1050","1100","1150","1157"],
         "correct": 2,
         "explanation": "الفائدة البسيطة = المبلغ × المعدل × الزمن = 1000 × 0.05 × 3 = 150، والمبلغ النهائي = 1000 + 150 = 1150 ريالاً."
@@ -2716,7 +2716,7 @@ function getSampleQuestions() {
         "subcategory": "ratio",
         "difficulty": "easy",
         "text": "1/4 + 1/4 =",
-        "options": ["1/8","1/4","1/2","2/4"],
+        "options": ["1/8","1/4","1/2","3/4"],
         "correct": 2,
         "explanation": "1/4 + 1/4 = 2/4، وبالاختصار على 2 تصبح 1/2."
     },
