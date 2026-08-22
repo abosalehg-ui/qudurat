@@ -5125,3 +5125,9 @@ function getSampleTests() {
         }
     ];
 }
+
+// يُصدَّر لـNode حتى يقرأه فاحص CI بـrequire بدل eval (انظر scripts/check-questions.mjs).
+// في المتصفح تبقى الدالتان عامّتين كما كانتا.
+if (typeof module !== 'undefined' && module.exports) {
+    module.exports = { getSampleQuestions, getSampleTests };
+}

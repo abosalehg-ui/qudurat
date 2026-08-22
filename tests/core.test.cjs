@@ -398,3 +398,80 @@ test('pruneProgress لا يمسّ البيانات الصغيرة', () => {
     assert.strictEqual(progress.testResults.length, 1);
     assert.strictEqual(Object.keys(progress.dailyStats).length, 1);
 });
+
+// ---------- sanitizeProgress ----------
+test('sanitizeProgress يُجبر الحقول المعطوبة على أنواعها الصحيحة', () => {
+    const p = core.sanitizeProgress({
+        streak: 'كثير',
+        lastActive: 42,
+        questionsAnswered: -5,
+        correctAnswers: NaN,
+        points: null,
+        savedQuestions: null,               // كان يفجّر renderQuestion بـTypeError
+        badges: 'gold',
+        categoryProgress: { verbal_analogy: { attempted: 3, correct: '2' }, bad: null },
+        dailyStats: null,                   // typeof null === 'object' — لا يصدّه فحص ساذج
+        testResults: [{ percentage: 80 }, null, 'نص'],
+        dailyChallenge: [],
+        dailyChallengesCompleted: '7'
+    });
+    assert.strictEqual(p.streak, 0);
+    assert.strictEqual(p.lastActive, null);
+    assert.strictEqual(p.questionsAnswered, 0);
+    assert.strictEqual(p.correctAnswers, 0);
+    assert.strictEqual(p.points, 0);
+    assert.deepStrictEqual(p.savedQuestions, []);
+    assert.deepStrictEqual(p.badges, []);
+    assert.deepStrictEqual(p.categoryProgress, { verbal_analogy: { attempted: 3, correct: 0 } });
+    assert.deepStrictEqual(p.dailyStats, {});
+    assert.deepStrictEqual(p.testResults, [{ percentage: 80 }]);
+    assert.deepStrictEqual(p.dailyChallenge, {});
+    assert.strictEqual(p.dailyChallengesCompleted, 0);
+});
+
+test('sanitizeProgress يمرّر البيانات السليمة كما هي', () => {
+    const clean = {
+        streak: 4,
+        lastActive: '2026-08-20',
+        questionsAnswered: 30,
+        correctAnswers: 21,
+        points: 210,
+        savedQuestions: [3, 17],
+        badges: ['first_q', 'q10'],
+        categoryProgress: { quant_algebra: { attempted: 10, correct: 8 } },
+        dailyStats: { '2026-08-20': { questions: 12, correct: 9 } },
+        testResults: [{ name: 'اختبار', percentage: 70 }],
+        dailyChallenge: { date: '2026-08-20', completed: true, correct: 4, total: 5 },
+        dailyChallengesCompleted: 2
+    };
+    assert.deepStrictEqual(core.sanitizeProgress(clean), clean);
+});
+
+test('sanitizeProgress يتحمّل مدخلاً ليس كائناً أصلاً', () => {
+    for (const junk of [null, undefined, [], 'نص', 9]) {
+        const p = core.sanitizeProgress(junk);
+        assert.deepStrictEqual(p.savedQuestions, []);
+        assert.deepStrictEqual(p.categoryProgress, {});
+        assert.deepStrictEqual(p.dailyStats, {});
+    }
+});
+
+// ---------- classifyCategories ----------
+test('classifyCategories يصنّف القوة والضعف بعتبات موحّدة وحد أدنى للمحاولات', () => {
+    const { strengths, weaknesses } = core.classifyCategories({
+        verbal_analogy: { correct: 8, total: 10 },        // 80% → قوة
+        quant_algebra: { correct: 2, attempted: 5 },      // 40% → ضعف (صيغة التقدم)
+        quant_ratio: { correct: 3, total: 5 },            // 60% → لا هذه ولا تلك
+        verbal_reading: { correct: 1, total: 1 },         // أقل من الحد الأدنى → تُتجاهل
+        bad: null
+    });
+    assert.deepStrictEqual(strengths, ['التناظر اللفظي']);
+    assert.deepStrictEqual(weaknesses, ['الجبر والمعادلات']);
+});
+
+test('classifyCategories يقبل حداً أدنى مخصصاً ومدخلاً فارغاً', () => {
+    const one = core.classifyCategories({ verbal_analogy: { correct: 1, total: 1 } }, 1);
+    assert.deepStrictEqual(one.strengths, ['التناظر اللفظي']);
+    const empty = core.classifyCategories(null);
+    assert.deepStrictEqual(empty, { strengths: [], weaknesses: [] });
+});

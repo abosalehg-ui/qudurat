@@ -3,18 +3,17 @@
 // كل ما يلي يوقف الفحص بكود خروج 1: أخطاء بنيوية (خيارات مكررة، مؤشر إجابة
 // خاطئ، تصنيف مجهول)، وشروح مفقودة أو عامة لا تشرح شيئاً.
 // التصنيف المعتمد يأتي من app-core.js حتى لا تتباعد نسخته عن نسخة التطبيق.
-import { readFileSync } from 'node:fs';
 import { createRequire } from 'node:module';
 
 const require = createRequire(import.meta.url);
 const { SUBCATEGORIES, DIFFICULTIES } = require('../app-core.js');
+const { getSampleQuestions } = require('../questions.js');
 
-const source = readFileSync(new URL('../questions.js', import.meta.url), 'utf8');
-if (!source.includes('function getSampleQuestions()')) {
+if (typeof getSampleQuestions !== 'function') {
     console.error('❌ لم يُعثر على getSampleQuestions في questions.js');
     process.exit(1);
 }
-const questions = (0, eval)(source + '\ngetSampleQuestions();');
+const questions = getSampleQuestions();
 
 // عبارات تُعيد صياغة السؤال بدل شرحه — لا قيمة تعليمية لها
 const GENERIC_EXPLANATIONS = [

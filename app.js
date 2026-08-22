@@ -197,6 +197,9 @@ function dismissTopModal() {
 let confirmResolver = null;
 
 function askConfirm(message, { title = 'تأكيد', okLabel = 'تأكيد', danger = true } = {}) {
+    // طلب متداخل فوق طلب معلّق كان يُسقط وعد الأول بلا حل (يتجمّد منتظره
+    // للأبد) — نحسم القديم بالرفض قبل فتح الجديد
+    if (confirmResolver) resolveConfirm(false);
     return new Promise(resolve => {
         confirmResolver = resolve;
         document.getElementById('confirmTitle').textContent = title;
@@ -204,7 +207,9 @@ function askConfirm(message, { title = 'تأكيد', okLabel = 'تأكيد', dan
         const ok = document.getElementById('confirmOkBtn');
         ok.textContent = okLabel;
         ok.className = danger ? 'btn btn-danger' : 'btn btn-primary';
-        openModal('confirmModal', '#confirmOkBtn');
+        // في الحوارات الهدّامة يبدأ التركيز على «إلغاء» — ضغطة Enter متسرعة
+        // ما تحذف شيئاً؛ التأكيد يحتاج انتقالاً مقصوداً
+        openModal('confirmModal', danger ? '#confirmCancelBtn' : '#confirmOkBtn');
     });
 }
 
@@ -219,6 +224,7 @@ function resolveConfirm(value) {
 let passwordResolver = null;
 
 function askPassword({ title, intro, label1, label2 = null, error = '' }) {
+    if (passwordResolver) resolvePassword(null);
     return new Promise(resolve => {
         passwordResolver = resolve;
         document.getElementById('passwordModalTitle').textContent = title;
@@ -275,12 +281,13 @@ function loadData() {
             if (data && typeof data === 'object' && data.version >= 2) {
                 userContent = applyStoredContent(data);
                 if (data.progress && typeof data.progress === 'object' && !Array.isArray(data.progress)) {
-                    userProgress = { ...userProgress, ...data.progress };
+                    // بيانات محفوظة قد تكون عُدّلت أو تلفت جزئياً — تُجبر على شكلها الصحيح
+                    userProgress = sanitizeProgress({ ...userProgress, ...data.progress });
                 }
             } else if (data && typeof data === 'object') {
                 const migrated = migrateLegacyData(data, getSampleQuestions(), getSampleTests());
                 userContent = migrated.userContent;
-                if (migrated.progress) userProgress = { ...userProgress, ...migrated.progress };
+                if (migrated.progress) userProgress = sanitizeProgress({ ...userProgress, ...migrated.progress });
                 saveData();
             }
         } catch (err) {
@@ -559,7 +566,8 @@ function persistSession() {
         try { sessionStorage.removeItem(STORAGE_KEYS.session); } catch (_) { /* تجاهل */ }
         return;
     }
-    storageSet(sessionStorage, STORAGE_KEYS.session, JSON.stringify(currentSession));
+    // savedAt يسمح عند الاستئناف بخصم مدة الغياب من الوقت المستغرق
+    storageSet(sessionStorage, STORAGE_KEYS.session, JSON.stringify({ ...currentSession, savedAt: Date.now() }));
 }
 
 function clearSession() {
@@ -598,6 +606,13 @@ async function offerSessionResume() {
         clearSession();
         return;
     }
+    // في التدريب الحر كان «الوقت المستغرق» يُحسب من startTime الأصلي فيتضخم
+    // بمدة الغياب — نزيح البداية بمدة الغياب فيُحتسب وقت الحل الفعلي فقط.
+    // الاختبارات المؤقتة تُترك على ساعة الحائط عمداً (فحص انتهاء الوقت أعلاه).
+    if (!saved.timeLimit && Number.isFinite(saved.savedAt)) {
+        saved.startTime += Math.max(0, Date.now() - saved.savedAt);
+    }
+    delete saved.savedAt;
     currentSession = saved;
     setPracticeBackHandler();
     showPage('practice');
@@ -914,9 +929,8 @@ function renderResults(results) {
     const minutes = Math.floor(results.timeSpent / 60000);
     const seconds = Math.floor((results.timeSpent % 60000) / 1000);
 
-    const categories = Object.entries(results.categoryStats);
-    const strengths = categories.filter(([, s]) => s.correct / s.total >= 0.7).map(([k]) => getCategoryName(k));
-    const weaknesses = categories.filter(([, s]) => s.correct / s.total < 0.5).map(([k]) => getCategoryName(k));
+    // نفس منطق صفحة التقدم (classifyCategories) حتى لا تصل الطالبَ رسالتان متناقضتان
+    const { strengths, weaknesses } = classifyCategories(results.categoryStats);
 
     document.getElementById('resultsContainer').innerHTML = `
         <h2 class="stack-gap-lg">🎉 نتيجة ${results.mode === 'test' ? 'الاختبار' : 'التدريب'}</h2>
@@ -1163,13 +1177,7 @@ function renderProgress() {
 
     renderPerformanceChart();
 
-    const catProgress = Object.entries(userProgress.categoryProgress);
-    const strengths = catProgress
-        .filter(([, s]) => s.attempted >= 3 && s.correct / s.attempted >= 0.7)
-        .map(([k]) => getCategoryName(k));
-    const weaknesses = catProgress
-        .filter(([, s]) => s.attempted >= 3 && s.correct / s.attempted < 0.5)
-        .map(([k]) => getCategoryName(k));
+    const { strengths, weaknesses } = classifyCategories(userProgress.categoryProgress);
 
     document.getElementById('strengthsList').innerHTML = strengths.length
         ? strengths.map(s => `<li>${escapeHTML(s)}</li>`).join('')
@@ -1189,7 +1197,9 @@ function bigStat(value, label) {
 function renderPerformanceChart() {
     const container = document.getElementById('performanceChart');
     const days = [];
-    const DAY_NAMES = ['الأحد', 'الاثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت'];
+    // أسماء قصيرة جاهزة — قصّ الاسم الكامل برمجياً (slice) ينتج «الأ/الا/الث…»
+    // لأن الأسماء كلها تبدأ بـ«ال»، ويتطابق الأحد مع الأربعاء
+    const DAY_NAMES = ['أحد', 'اثنين', 'ثلاثاء', 'أربعاء', 'خميس', 'جمعة', 'سبت'];
 
     for (let i = 6; i >= 0; i--) {
         const date = new Date(Date.now() - i * 86400000);
@@ -1203,7 +1213,7 @@ function renderPerformanceChart() {
     container.innerHTML = days.map(day => `
         <div class="chart-col">
             <div class="chart-bar" style="height:${Math.max((day.questions / max) * 100, 4)}%" data-value="${day.questions}"></div>
-            <span class="chart-label">${day.name.slice(0, 3)}</span>
+            <span class="chart-label">${day.name}</span>
         </div>
     `).join('');
 }
@@ -1824,7 +1834,8 @@ async function importAllData(input) {
 
             userContent = next;
             if (data.progress && typeof data.progress === 'object' && !Array.isArray(data.progress)) {
-                userProgress = pruneProgress({ ...userProgress, ...data.progress });
+                // ملف النسخة الاحتياطية خارجي بالكامل — يُجبر التقدم على شكله الصحيح
+                userProgress = pruneProgress(sanitizeProgress({ ...userProgress, ...data.progress }));
             }
         } else {
             // نسخة احتياطية بالصيغة القديمة (قاعدة كاملة): نستخرج محتوى المستخدم منها
@@ -1836,7 +1847,7 @@ async function importAllData(input) {
             skipped += rawT.length - validT.length;
             const migrated = migrateLegacyData({ ...data, questions: validQ, tests: validT }, getSampleQuestions(), getSampleTests());
             userContent = migrated.userContent;
-            if (migrated.progress) userProgress = pruneProgress({ ...userProgress, ...migrated.progress });
+            if (migrated.progress) userProgress = pruneProgress(sanitizeProgress({ ...userProgress, ...migrated.progress }));
         }
 
         rebuildDB();
