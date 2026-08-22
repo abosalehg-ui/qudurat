@@ -321,6 +321,64 @@
         return { userContent, progress };
     }
 
+    // كائن التقدم يصل من localStorage ومن ملفات النسخ الاحتياطية المستوردة،
+    // وكلاهما قد يكون معطوباً (حقل null أو نوع خاطئ). الدمج بلا فحص يمرّ
+    // بنجاح ثم يفجّر التطبيق لاحقاً (savedQuestions.includes على null مثلاً)
+    // — لذا يُجبَر كل حقل على نوعه هنا قبل أي استخدام.
+    function sanitizeProgress(raw) {
+        const p = (raw && typeof raw === 'object' && !Array.isArray(raw)) ? raw : {};
+        const num = v => (typeof v === 'number' && Number.isFinite(v) && v >= 0) ? v : 0;
+        const arr = v => Array.isArray(v) ? v : [];
+        const obj = v => (v && typeof v === 'object' && !Array.isArray(v)) ? v : {};
+
+        const categoryProgress = {};
+        for (const [key, val] of Object.entries(obj(p.categoryProgress))) {
+            if (!val || typeof val !== 'object') continue;
+            categoryProgress[key] = { attempted: num(val.attempted), correct: num(val.correct) };
+        }
+        const dailyStats = {};
+        for (const [key, val] of Object.entries(obj(p.dailyStats))) {
+            if (!val || typeof val !== 'object') continue;
+            dailyStats[key] = { questions: num(val.questions), correct: num(val.correct) };
+        }
+
+        return {
+            ...p,
+            streak: num(p.streak),
+            lastActive: typeof p.lastActive === 'string' ? p.lastActive : null,
+            questionsAnswered: num(p.questionsAnswered),
+            correctAnswers: num(p.correctAnswers),
+            points: num(p.points),
+            savedQuestions: arr(p.savedQuestions).filter(Number.isFinite),
+            badges: arr(p.badges).filter(b => typeof b === 'string'),
+            categoryProgress,
+            dailyStats,
+            testResults: arr(p.testResults).filter(r => r && typeof r === 'object'),
+            dailyChallenge: obj(p.dailyChallenge),
+            dailyChallengesCompleted: num(p.dailyChallengesCompleted)
+        };
+    }
+
+    // تصنيف موحّد للقوة/الضعف — كان محسوباً في موضعين بعتبات متضاربة
+    // (شاشة النتيجة بلا حد أدنى للمحاولات وصفحة التقدم بحد 3) فتصل
+    // الطالبَ رسالتان متناقضتان عن الفئة نفسها. يقبل إحصاءات الجلسة
+    // ({correct, total}) وإحصاءات التقدم ({correct, attempted}) معاً.
+    const CLASSIFY_MIN_ATTEMPTS = 3;
+
+    function classifyCategories(categoryStats, minAttempts = CLASSIFY_MIN_ATTEMPTS) {
+        const strengths = [];
+        const weaknesses = [];
+        for (const [key, stats] of Object.entries(categoryStats || {})) {
+            if (!stats || typeof stats !== 'object') continue;
+            const attempts = Number.isFinite(stats.total) ? stats.total : (stats.attempted || 0);
+            if (attempts < minAttempts) continue;
+            const accuracy = (stats.correct || 0) / attempts;
+            if (accuracy >= 0.7) strengths.push(getCategoryName(key));
+            else if (accuracy < 0.5) weaknesses.push(getCategoryName(key));
+        }
+        return { strengths, weaknesses };
+    }
+
     // سجل النتائج ينمو بلا حد ويُسلسَل عند كل حفظ — نُبقي الأحدث فقط.
     const MAX_TEST_RESULTS = 100;
     const MAX_DAILY_STATS_DAYS = 400;
@@ -414,6 +472,8 @@
         buildQuestionsDB,
         buildTestsDB,
         migrateLegacyData,
+        sanitizeProgress,
+        classifyCategories,
         pruneProgress,
         MAX_TEST_RESULTS,
         calculateSessionResults

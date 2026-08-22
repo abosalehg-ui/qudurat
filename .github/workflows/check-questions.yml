@@ -8,15 +8,32 @@ on:
 permissions:
   contents: read
 
+# الإجراءات مثبتة بالـSHA الكامل لا بالوسم — الوسم قابل لإعادة التوجيه
+# لكود مختلف، والـSHA يقفل سلسلة التوريد على نسخة بعينها.
 jobs:
   check:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
           node-version: 20
       - name: فحص سلامة قاعدة الأسئلة
         run: npm run check
       - name: اختبارات الوحدات
         run: npm test
+
+  e2e:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: 20
+      # Playwright تُثبَّت وقت التشغيل فقط (--no-save) — المشروع يبقى بلا اعتماديات
+      - name: تثبيت Playwright وChromium
+        run: |
+          npm install --no-save --no-package-lock playwright
+          npx playwright install --with-deps chromium
+      - name: اختبار تكامل المتصفح
+        run: npm run test:e2e
