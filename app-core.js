@@ -57,6 +57,35 @@
         return `${y}-${m}-${d}`;
     }
 
+    // الأمس بحساب التقويم لا بطرح 86400000 مللي ثانية (يخطئ عند تغيّر التوقيت الصيفي)
+    function getYesterdayKey(date = new Date()) {
+        return getTodayKey(new Date(date.getFullYear(), date.getMonth(), date.getDate() - 1));
+    }
+
+    // تطبيع للبحث: يوحّد الهمزات والتاء المربوطة والألف المقصورة ويحذف التشكيل
+    // والتطويل، فيجد البحث بـ«اسرة» كلمة «أسرة» وبـ«مدرسه» كلمة «مدرسة».
+    function normalizeArabic(value) {
+        return String(value == null ? '' : value)
+            .replace(/[\u064B-\u065F\u0670\u0640]/g, '')
+            .replace(/[أإآٱ]/g, 'ا')
+            .replace(/ة/g, 'ه')
+            .replace(/ى/g, 'ي')
+            .replace(/ؤ/g, 'و')
+            .replace(/ئ/g, 'ي')
+            .toLowerCase()
+            .trim();
+    }
+
+    // أكبر معرّف + 1. المعرّفات المبنية على Date.now() كانت تتصادم: استيراد
+    // 500 صف يحجز 500 مللي ثانية من الأرقام القادمة فيصطدم بها أي إضافة تالية.
+    function nextId(ids) {
+        let max = 0;
+        for (const id of ids) {
+            if (Number.isFinite(id) && id > max) max = id;
+        }
+        return max + 1;
+    }
+
     function getLevel(points) {
         return Math.floor(points / POINTS_PER_LEVEL) + 1;
     }
@@ -156,11 +185,20 @@
 
     // حقل يبدأ بـ = + - @ يُنفَّذ كصيغة عند فتح الملف في Excel/Sheets
     // (CSV Injection). الفاصلة العليا تُعطّل التنفيذ وتبقى القيمة مقروءة.
+    // القيمة التي تبدأ بفواصل عليا قبل رمز صيغة تُحمى أيضاً، حتى يبقى العكس
+    // (unescapeCSVCell) دقيقاً: يُزال دائماً ما أضفناه نحن فقط.
     function escapeCSV(value) {
         let s = String(value == null ? '' : value);
-        if (/^[=+\-@\t\r]/.test(s)) s = "'" + s;
+        if (/^'*[=+\-@\t\r]/.test(s)) s = "'" + s;
         if (/[",\n\r]/.test(s)) return '"' + s.replace(/"/g, '""') + '"';
         return s;
+    }
+
+    // عكس حماية الصيغ عند الاستيراد: بدونه يعود الخيار «-8» من ملف مُصدَّر
+    // بصيغة «'-8»، فيُعدّ تعديلاً ويُفسد السؤال الأصلي عند التحديث بالمعرّف.
+    function unescapeCSVCell(value) {
+        const s = String(value == null ? '' : value);
+        return /^'+[=+\-@\t\r]/.test(s) ? s.slice(1) : s;
     }
 
     function shuffleArray(array) {
@@ -244,10 +282,28 @@
         return { ...EMPTY_USER_CONTENT, questionOverrides: {}, customQuestions: [], deletedQuestionIds: [], customTests: [], deletedTestIds: [] };
     }
 
+    // مفتاح التجاوز يجب أن يكون رقماً يطابق معرّف السؤال نفسه: مفتاح «7» بسؤال
+    // معرّفه 9999 يستبدل سؤال العينة 7 بسؤال آخر، ومفتاح «__proto__» يغيّر
+    // نموذج الكائن بدل أن يضيف خاصية.
+    function isValidOverrideEntry(key, q) {
+        return /^\d+$/.test(String(key))
+            && Boolean(q) && typeof q === 'object' && !Array.isArray(q)
+            && q.id === Number(key);
+    }
+
+    function sanitizeOverrides(raw) {
+        const result = {};
+        if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return result;
+        for (const [key, q] of Object.entries(raw)) {
+            if (isValidOverrideEntry(key, q)) result[q.id] = q;
+        }
+        return result;
+    }
+
     function applyStoredContent(data) {
         return {
             customQuestions: Array.isArray(data.customQuestions) ? data.customQuestions : [],
-            questionOverrides: (data.questionOverrides && typeof data.questionOverrides === 'object' && !Array.isArray(data.questionOverrides)) ? data.questionOverrides : {},
+            questionOverrides: sanitizeOverrides(data.questionOverrides),
             deletedQuestionIds: Array.isArray(data.deletedQuestionIds) ? data.deletedQuestionIds.filter(Number.isFinite) : [],
             customTests: Array.isArray(data.customTests) ? data.customTests : [],
             deletedTestIds: Array.isArray(data.deletedTestIds) ? data.deletedTestIds.filter(Number.isFinite) : []
@@ -269,18 +325,19 @@
         return sampleTests.filter(t => !deleted.has(t.id)).concat(userContent.customTests);
     }
 
+    function sameQuestionContent(a, b) {
+        return a.text === b.text && a.section === b.section && a.subcategory === b.subcategory &&
+            a.difficulty === b.difficulty && a.correct === b.correct &&
+            (a.context || null) === (b.context || null) && (a.explanation || '') === (b.explanation || '') &&
+            JSON.stringify(a.options) === JSON.stringify(b.options);
+    }
+
     // الصيغة القديمة كانت تخزّن قاعدة الأسئلة كاملة؛ نستخرج منها محتوى
     // المستخدم فقط. لا نستنتج الحذف من الغياب: بيانات إصدار أقدم قد
     // تنقصها أسئلة أُضيفت لاحقاً، واعتبارها محذوفة يمنع وصولها نهائياً.
     function migrateLegacyData(data, sampleQuestions, sampleTests) {
         const userContent = emptyUserContent();
         let progress = null;
-
-        const sameQuestion = (a, b) =>
-            a.text === b.text && a.section === b.section && a.subcategory === b.subcategory &&
-            a.difficulty === b.difficulty && a.correct === b.correct &&
-            (a.context || null) === (b.context || null) && (a.explanation || '') === (b.explanation || '') &&
-            JSON.stringify(a.options) === JSON.stringify(b.options);
 
         if (Array.isArray(data.questions)) {
             const sampleById = new Map(sampleQuestions.map(q => [q.id, q]));
@@ -289,7 +346,7 @@
                 const sample = sampleById.get(q.id);
                 if (!sample) {
                     userContent.customQuestions.push({ ...q, custom: true });
-                } else if (!sameQuestion(q, sample)) {
+                } else if (!sameQuestionContent(q, sample)) {
                     userContent.questionOverrides[q.id] = q;
                 }
             }
@@ -404,16 +461,22 @@
         let unanswered = 0;
         const categoryStats = {};
 
+        // التدريب الحر مفتوح: فيه كل أسئلة الفئة والطالب يتوقف متى شاء، فما لم
+        // يصل إليه ليس «متروكاً» ولا يدخل النسبة. في الاختبار والتحدي يُعدّ متروكاً.
+        const openEnded = session.mode === 'practice';
+
         session.questions.forEach((q, i) => {
+            const answer = session.answers[i];
+            if (openEnded && answer == null) return;
             const key = `${q.section}_${q.subcategory}`;
             if (!categoryStats[key]) {
                 categoryStats[key] = { correct: 0, total: 0 };
             }
             categoryStats[key].total++;
 
-            if (session.answers[i] === null) {
+            if (answer == null) {
                 unanswered++;
-            } else if (session.answers[i] === q.correct) {
+            } else if (answer === q.correct) {
                 correct++;
                 categoryStats[key].correct++;
             } else {
@@ -421,7 +484,7 @@
             }
         });
 
-        const total = session.questions.length;
+        const total = correct + wrong + unanswered;
         const percentage = total > 0 ? Math.round((correct / total) * 100) : 0;
         const timeSpent = Date.now() - session.startTime;
 
@@ -438,6 +501,172 @@
         };
     }
 
+    // ==================== احتساب الجهد (مصدر وحيد ومُختبَر) ====================
+    // كان الاحتساب موزعاً في app.js بلا اختبارات، فاحتُسبت الجلسة الفارغة إنجازاً
+    // كاملاً (الأسئلة المتروكة «مُجابة» والتحدي يُكافأ بلا إجابة)، بينما لم يُحتسب
+    // التدريب الحر إلا عند بلوغ آخر سؤال في الفئة. القاعدة الآن: لا يُحتسب إلا
+    // السؤال المُجاب فعلاً، ويُحتسب في التدريب الحر لحظة إجابته.
+    // الدوال تعدّل كائن التقدم المُمرَّر فقط — بلا DOM ولا متغيرات عامة.
+    const DAILY_CHALLENGE_BONUS = 50;
+
+    function advanceStreak(progress, now = new Date()) {
+        const today = getTodayKey(now);
+        if (progress.lastActive === today) return;
+        progress.streak = progress.lastActive === getYesterdayKey(now) ? (progress.streak || 0) + 1 : 1;
+        progress.lastActive = today;
+    }
+
+    // answers: [{ key: 'verbal_analogy', correct: true }] — أسئلة مُجابة فقط
+    function creditAnswers(progress, answers, now = new Date()) {
+        const list = Array.isArray(answers) ? answers : [];
+        if (!list.length) return { answered: 0, correct: 0, pointsEarned: 0 };
+
+        progress.categoryProgress = progress.categoryProgress || {};
+        let correct = 0;
+        for (const a of list) {
+            const stats = progress.categoryProgress[a.key]
+                || (progress.categoryProgress[a.key] = { attempted: 0, correct: 0 });
+            stats.attempted++;
+            if (a.correct) {
+                stats.correct++;
+                correct++;
+            }
+        }
+
+        progress.questionsAnswered = (progress.questionsAnswered || 0) + list.length;
+        progress.correctAnswers = (progress.correctAnswers || 0) + correct;
+
+        progress.dailyStats = progress.dailyStats || {};
+        const today = getTodayKey(now);
+        const day = progress.dailyStats[today] || (progress.dailyStats[today] = { questions: 0, correct: 0 });
+        day.questions += list.length;
+        day.correct += correct;
+
+        const pointsEarned = correct * POINTS_PER_CORRECT;
+        progress.points = (progress.points || 0) + pointsEarned;
+        advanceStreak(progress, now);
+        return { answered: list.length, correct, pointsEarned };
+    }
+
+    function answeredItems(session) {
+        const items = [];
+        (session.questions || []).forEach((q, i) => {
+            const answer = session.answers ? session.answers[i] : null;
+            if (answer == null) return;
+            items.push({ key: `${q.section}_${q.subcategory}`, correct: answer === q.correct });
+        });
+        return items;
+    }
+
+    // يُطبَّق عند إنهاء جلسة. التدريب الحر احتُسب سؤالاً بسؤال لحظة الإجابة،
+    // فلا يُضاف هنا منه شيء حتى لا يُحتسب مرتين. الاختبار والتحدي يُحتسبان هنا،
+    // ويغذّيان تحليل الفئات (categoryProgress) كالتدريب تماماً.
+    function applySessionToProgress(progress, session, results, now = new Date()) {
+        const outcome = { answered: 0, correct: 0, pointsEarned: 0, testRecorded: false, dailyCompleted: false };
+        if (!session || session.mode === 'practice') return outcome;
+
+        Object.assign(outcome, creditAnswers(progress, answeredItems(session), now));
+
+        if (session.mode === 'test' && outcome.answered > 0) {
+            progress.testResults = progress.testResults || [];
+            progress.testResults.push({
+                date: now.toISOString(),
+                name: results.testName,
+                percentage: results.percentage,
+                correct: results.correct,
+                total: results.total,
+                timeSpent: results.timeSpent
+            });
+            outcome.testRecorded = true;
+        }
+
+        // التحدي يكتمل بإجابة أسئلته كلها، ومرة واحدة في اليوم
+        const total = (session.questions || []).length;
+        const today = getTodayKey(now);
+        const dc = progress.dailyChallenge || {};
+        const alreadyDone = dc.completed && dc.date === today;
+        if (session.mode === 'daily' && total > 0 && outcome.answered === total && !alreadyDone) {
+            progress.dailyChallenge = { ...dc, date: today, completed: true, correct: outcome.correct, total };
+            progress.dailyChallengesCompleted = (progress.dailyChallengesCompleted || 0) + 1;
+            progress.points = (progress.points || 0) + DAILY_CHALLENGE_BONUS;
+            outcome.pointsEarned += DAILY_CHALLENGE_BONUS;
+            outcome.dailyCompleted = true;
+        }
+        return outcome;
+    }
+
+    // ==================== CSV ====================
+    // context في آخر الأعمدة حتى تبقى الملفات القديمة (11 عموداً) مقروءة كما هي
+    const CSV_HEADERS = ['id', 'section', 'subcategory', 'difficulty', 'text', 'optionA', 'optionB', 'optionC', 'optionD', 'correct', 'explanation', 'context'];
+    const CSV_REQUIRED = ['section', 'subcategory', 'difficulty', 'text', 'optionA', 'optionB', 'optionC', 'optionD', 'correct'];
+
+    function questionToCSVRow(q) {
+        const options = Array.isArray(q.options) ? q.options : [];
+        return [q.id, q.section, q.subcategory, q.difficulty, q.text,
+            options[0], options[1], options[2], options[3],
+            q.correct, q.explanation || '', q.context || ''];
+    }
+
+    // يحوّل صفوف CSV إلى خطة استيراد بلا أي أثر جانبي:
+    // - صف بمعرّف موجود يُحدّث سؤاله، فيصير «صدّر ← عدّل في Excel ← استورد» آمناً
+    //   بعد أن كان يضاعف البنك كله (التصدير يشمل أسئلة العينة).
+    // - صف جديد يُضاف بمعرّف فريد متسلسل يبدأ من firstNewId.
+    // - صف يطابق نصُّه سؤالاً موجوداً في القسم نفسه يُتخطّى بدل أن يتكرر.
+    function planCSVImport(rows, existing, firstNewId, maxRows = Infinity) {
+        const headers = (rows[0] || []).map(h => String(h).trim());
+        const missing = CSV_REQUIRED.filter(h => !headers.includes(h));
+        if (missing.length) return { error: 'missing-columns', missing };
+
+        const col = name => headers.indexOf(name);
+        const cell = (r, name) => (col(name) >= 0 ? unescapeCSVCell(r[col(name)]).trim() : null);
+        const isValid = q => validateQuestion(q).length === 0 && validateQuestionMeta(q).length === 0;
+        const textKey = q => `${q.section}|${normalizeArabic(q.text)}`;
+
+        const byId = new Map(existing.map(q => [q.id, q]));
+        const knownTexts = new Set(existing.map(textKey));
+        const plan = { added: [], updated: [], unchanged: 0, duplicates: 0, invalid: 0 };
+        let newId = firstNewId;
+
+        const limit = Math.min(rows.length, maxRows + 1);
+        for (let i = 1; i < limit; i++) {
+            const r = rows[i];
+            if (!Array.isArray(r) || r.every(c => !String(c).trim())) continue; // سطر فارغ
+            if (r.length < CSV_REQUIRED.length) { plan.invalid++; continue; }
+
+            const fields = {
+                section: cell(r, 'section'),
+                subcategory: cell(r, 'subcategory'),
+                difficulty: cell(r, 'difficulty'),
+                text: cell(r, 'text'),
+                options: ['optionA', 'optionB', 'optionC', 'optionD'].map(h => cell(r, h)),
+                correct: parseInt(cell(r, 'correct'), 10)
+            };
+            const explanation = cell(r, 'explanation');
+            if (explanation !== null) fields.explanation = explanation;
+            const context = cell(r, 'context');
+            if (context !== null) fields.context = context || null;
+
+            const idCell = cell(r, 'id');
+            const target = idCell && /^\d+$/.test(idCell) ? byId.get(Number(idCell)) : undefined;
+            if (target) {
+                const candidate = { ...target, ...fields };
+                if (!isValid(candidate)) { plan.invalid++; continue; }
+                if (sameQuestionContent(candidate, target)) { plan.unchanged++; continue; }
+                plan.updated.push(candidate);
+                byId.set(candidate.id, candidate);
+                continue;
+            }
+
+            const candidate = { id: newId, explanation: '', context: null, ...fields, custom: true };
+            if (!isValid(candidate)) { plan.invalid++; continue; }
+            if (knownTexts.has(textKey(candidate))) { plan.duplicates++; continue; }
+            knownTexts.add(textKey(candidate));
+            plan.added.push(candidate);
+            newId++;
+        }
+        return plan;
+    }
+
     const QuduratCore = {
         POINTS_PER_CORRECT,
         POINTS_PER_LEVEL,
@@ -452,6 +681,9 @@
         safeId,
         safeToken,
         getTodayKey,
+        getYesterdayKey,
+        normalizeArabic,
+        nextId,
         getLevel,
         getLevelProgress,
         getDifficultyLabel,
@@ -461,6 +693,7 @@
         isValidImportedTest,
         parseCSV,
         escapeCSV,
+        unescapeCSVCell,
         shuffleArray,
         shuffleQuestionOptions,
         getCategoryName,
@@ -468,7 +701,10 @@
         getCategoryMastery,
         getRecommendedCategories,
         emptyUserContent,
+        isValidOverrideEntry,
+        sanitizeOverrides,
         applyStoredContent,
+        sameQuestionContent,
         buildQuestionsDB,
         buildTestsDB,
         migrateLegacyData,
@@ -476,7 +712,16 @@
         classifyCategories,
         pruneProgress,
         MAX_TEST_RESULTS,
-        calculateSessionResults
+        calculateSessionResults,
+        DAILY_CHALLENGE_BONUS,
+        advanceStreak,
+        creditAnswers,
+        answeredItems,
+        applySessionToProgress,
+        CSV_HEADERS,
+        CSV_REQUIRED,
+        questionToCSVRow,
+        planCSVImport
     };
 
     if (typeof module !== 'undefined' && module.exports) {

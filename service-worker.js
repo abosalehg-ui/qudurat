@@ -1,5 +1,5 @@
 // نسخة الكاش تتغيّر مع كل إصدار يغيّر الأصول — activate يحذف ما سواها
-const CACHE_NAME = 'qudurat-v4';
+const CACHE_NAME = 'qudurat-v5';
 
 const ASSETS = [
   './',

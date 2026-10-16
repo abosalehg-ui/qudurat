@@ -475,3 +475,222 @@ test('classifyCategories يقبل حداً أدنى مخصصاً ومدخلاً 
     const empty = core.classifyCategories(null);
     assert.deepStrictEqual(empty, { strengths: [], weaknesses: [] });
 });
+
+// ---------- احتساب الجهد: creditAnswers / applySessionToProgress ----------
+const NOW = new Date(2026, 9, 16, 12, 0, 0);
+const freshProgress = () => core.sanitizeProgress({});
+const q = (section, subcategory, correct) => ({ section, subcategory, correct });
+
+test('calculateSessionResults في التدريب الحر يحتسب المُجاب فقط', () => {
+    const r = core.calculateSessionResults({
+        mode: 'practice', startTime: Date.now(),
+        questions: [q('verbal', 'analogy', 0), q('verbal', 'analogy', 1), q('verbal', 'analogy', 2)],
+        answers: [0, null, null]
+    });
+    assert.strictEqual(r.total, 1);
+    assert.strictEqual(r.unanswered, 0);
+    assert.strictEqual(r.percentage, 100);
+    assert.deepStrictEqual(r.categoryStats.verbal_analogy, { correct: 1, total: 1 });
+});
+
+test('creditAnswers يحدّث العدّادات والفئات والإحصاء اليومي والنقاط والتتابع معاً', () => {
+    const p = freshProgress();
+    const out = core.creditAnswers(p, [
+        { key: 'verbal_analogy', correct: true },
+        { key: 'verbal_analogy', correct: false },
+        { key: 'quant_algebra', correct: true }
+    ], NOW);
+    assert.deepStrictEqual(out, { answered: 3, correct: 2, pointsEarned: 20 });
+    assert.strictEqual(p.questionsAnswered, 3);
+    assert.strictEqual(p.correctAnswers, 2);
+    assert.strictEqual(p.points, 20);
+    assert.deepStrictEqual(p.categoryProgress.verbal_analogy, { attempted: 2, correct: 1 });
+    assert.deepStrictEqual(p.dailyStats['2026-10-16'], { questions: 3, correct: 2 });
+    assert.strictEqual(p.streak, 1);
+    assert.strictEqual(p.lastActive, '2026-10-16');
+});
+
+test('creditAnswers بلا إجابات لا يغيّر شيئاً — لا تتابع ولا إحصاء يومي', () => {
+    const p = freshProgress();
+    const before = JSON.stringify(p);
+    assert.deepStrictEqual(core.creditAnswers(p, [], NOW), { answered: 0, correct: 0, pointsEarned: 0 });
+    assert.strictEqual(JSON.stringify(p), before);
+});
+
+test('advanceStreak: نفس اليوم لا يزيد، الأمس يزيد، الانقطاع يعيد إلى 1', () => {
+    const p = { streak: 4, lastActive: '2026-10-16' };
+    core.advanceStreak(p, NOW);
+    assert.strictEqual(p.streak, 4);
+    p.lastActive = '2026-10-15';
+    core.advanceStreak(p, NOW);
+    assert.strictEqual(p.streak, 5);
+    p.lastActive = '2026-10-10';
+    core.advanceStreak(p, NOW);
+    assert.strictEqual(p.streak, 1);
+});
+
+test('getYesterdayKey يعبر حدود الشهر والسنة', () => {
+    assert.strictEqual(core.getYesterdayKey(new Date(2026, 2, 1)), '2026-02-28');
+    assert.strictEqual(core.getYesterdayKey(new Date(2027, 0, 1)), '2026-12-31');
+});
+
+const dailySession = answers => ({
+    mode: 'daily',
+    questions: [q('verbal', 'analogy', 0), q('verbal', 'reading', 1), q('quant', 'ratio', 2), q('quant', 'algebra', 3), q('quant', 'geometry', 0)],
+    answers
+});
+
+test('applySessionToProgress: تحدٍّ يومي بلا إجابات لا يمنح نقاطاً ولا تتابعاً ولا إكمالاً', () => {
+    const p = freshProgress();
+    const out = core.applySessionToProgress(p, dailySession([null, null, null, null, null]), {}, NOW);
+    assert.strictEqual(out.dailyCompleted, false);
+    assert.strictEqual(p.points, 0);
+    assert.strictEqual(p.questionsAnswered, 0);
+    assert.strictEqual(p.streak, 0);
+    assert.strictEqual(p.dailyChallengesCompleted, 0);
+    assert.deepStrictEqual(p.dailyStats, {});
+});
+
+test('applySessionToProgress: تحدٍّ جزئي يُحتسب المُجاب منه بلا مكافأة الإكمال', () => {
+    const p = freshProgress();
+    const out = core.applySessionToProgress(p, dailySession([0, 1, null, null, null]), {}, NOW);
+    assert.strictEqual(out.dailyCompleted, false);
+    assert.strictEqual(p.questionsAnswered, 2);
+    assert.strictEqual(p.points, 20);
+    assert.strictEqual(p.dailyChallengesCompleted, 0);
+});
+
+test('applySessionToProgress: تحدٍّ مكتمل يُكافأ مرة واحدة في اليوم', () => {
+    const p = freshProgress();
+    const out = core.applySessionToProgress(p, dailySession([0, 0, 2, 3, 0]), {}, NOW);
+    assert.strictEqual(out.dailyCompleted, true);
+    assert.strictEqual(p.points, 4 * 10 + core.DAILY_CHALLENGE_BONUS);
+    assert.strictEqual(p.dailyChallengesCompleted, 1);
+    assert.deepStrictEqual(
+        { completed: p.dailyChallenge.completed, correct: p.dailyChallenge.correct, date: p.dailyChallenge.date },
+        { completed: true, correct: 4, date: '2026-10-16' }
+    );
+    const again = core.applySessionToProgress(p, dailySession([0, 0, 2, 3, 0]), {}, NOW);
+    assert.strictEqual(again.dailyCompleted, false);
+    assert.strictEqual(p.dailyChallengesCompleted, 1);
+});
+
+test('applySessionToProgress: الاختبار يغذّي الفئات ويُسجَّل فقط إن أُجيب فيه شيء', () => {
+    const p = freshProgress();
+    const session = { mode: 'test', questions: [q('verbal', 'analogy', 0), q('quant', 'ratio', 1)], answers: [0, null] };
+    const results = { testName: 'تجريبي', percentage: 50, correct: 1, total: 2, timeSpent: 1000 };
+    const out = core.applySessionToProgress(p, session, results, NOW);
+    assert.strictEqual(out.testRecorded, true);
+    assert.strictEqual(p.testResults.length, 1);
+    assert.strictEqual(p.testResults[0].name, 'تجريبي');
+    assert.deepStrictEqual(p.categoryProgress.verbal_analogy, { attempted: 1, correct: 1 });
+    assert.strictEqual(p.categoryProgress.quant_ratio, undefined);
+
+    const empty = core.applySessionToProgress(p, { ...session, answers: [null, null] }, results, NOW);
+    assert.strictEqual(empty.testRecorded, false);
+    assert.strictEqual(p.testResults.length, 1);
+});
+
+test('applySessionToProgress لا يحتسب التدريب الحر مرة ثانية (احتُسب لحظة الإجابة)', () => {
+    const p = freshProgress();
+    const out = core.applySessionToProgress(p, { mode: 'practice', questions: [q('verbal', 'analogy', 0)], answers: [0] }, {}, NOW);
+    assert.strictEqual(out.answered, 0);
+    assert.strictEqual(p.questionsAnswered, 0);
+});
+
+// ---------- المعرّفات والتجاوزات ----------
+test('nextId يعيد أكبر معرّف + 1 ويتجاهل غير الأرقام', () => {
+    assert.strictEqual(core.nextId([3, 9, 'x', NaN, null, 4]), 10);
+    assert.strictEqual(core.nextId([]), 1);
+});
+
+test('isValidOverrideEntry يرفض مفتاحاً لا يطابق معرّف السؤال و__proto__', () => {
+    assert.strictEqual(core.isValidOverrideEntry('7', { id: 7 }), true);
+    assert.strictEqual(core.isValidOverrideEntry('7', { id: 9999 }), false);
+    assert.strictEqual(core.isValidOverrideEntry('__proto__', { id: 7 }), false);
+    assert.strictEqual(core.isValidOverrideEntry('7', null), false);
+    const parsed = JSON.parse('{"__proto__": {"id": 1}, "5": {"id": 5}}');
+    const clean = core.sanitizeOverrides(parsed);
+    assert.deepStrictEqual(Object.keys(clean), ['5']);
+    assert.strictEqual(Object.getPrototypeOf(clean), Object.prototype);
+});
+
+test('applyStoredContent يُسقط التجاوزات ذات المفاتيح المخالفة', () => {
+    const uc = core.applyStoredContent({ questionOverrides: { 3: { id: 3 }, 4: { id: 40 } } });
+    assert.deepStrictEqual(Object.keys(uc.questionOverrides), ['3']);
+});
+
+test('normalizeArabic يوحّد الهمزات والتاء المربوطة والألف المقصورة ويحذف التشكيل', () => {
+    assert.strictEqual(core.normalizeArabic('أُسْرَةٌ'), core.normalizeArabic('اسره'));
+    assert.strictEqual(core.normalizeArabic('إلى مستشفى'), 'الي مستشفي');
+    assert.strictEqual(core.normalizeArabic('مسؤول'), 'مسوول');
+    assert.strictEqual(core.normalizeArabic(null), '');
+});
+
+// ---------- planCSVImport ----------
+const sampleQ = (id, text, extra = {}) => ({
+    id, section: 'verbal', subcategory: 'analogy', difficulty: 'easy', text,
+    options: ['أ', 'ب', 'ج', 'د'], correct: 0, explanation: 'شرح كافٍ للسؤال', context: null, ...extra
+});
+const toRows = questions => [core.CSV_HEADERS, ...questions.map(core.questionToCSVRow).map(r => r.map(String))];
+
+test('planCSVImport: تصدير ثم استيراد بلا تعديل لا يضيف شيئاً', () => {
+    const existing = [sampleQ(1, 'سؤال أول'), sampleQ(2, 'سؤال ثانٍ')];
+    const plan = core.planCSVImport(toRows(existing), existing, 100);
+    assert.strictEqual(plan.added.length, 0);
+    assert.strictEqual(plan.updated.length, 0);
+    assert.strictEqual(plan.unchanged, 2);
+});
+
+test('planCSVImport: الصف بمعرّف موجود يحدّث سؤاله ويحفظ السياق إن غاب عموده', () => {
+    const existing = [sampleQ(1, 'سؤال أول', { context: 'نص قراءة' })];
+    const headers = core.CSV_HEADERS.filter(h => h !== 'context');
+    const row = core.questionToCSVRow({ ...existing[0], text: 'سؤال أول معدّل' }).slice(0, headers.length).map(String);
+    const plan = core.planCSVImport([headers, row], existing, 100);
+    assert.strictEqual(plan.updated.length, 1);
+    assert.strictEqual(plan.updated[0].id, 1);
+    assert.strictEqual(plan.updated[0].text, 'سؤال أول معدّل');
+    assert.strictEqual(plan.updated[0].context, 'نص قراءة');
+});
+
+test('planCSVImport: الجديد يُعطى معرّفات فريدة متسلسلة، والمكرر نصاً يُتخطى', () => {
+    const existing = [sampleQ(1, 'سؤال موجود')];
+    const rows = [core.CSV_HEADERS,
+        ['', 'verbal', 'analogy', 'easy', 'سؤال جديد', 'أ', 'ب', 'ج', 'د', '1', 'شرح يكفي للتوضيح', ''],
+        ['', 'verbal', 'analogy', 'easy', 'سؤال جديد آخر', 'أ', 'ب', 'ج', 'د', '2', '', ''],
+        ['', 'verbal', 'analogy', 'easy', 'سؤال موجود', 'أ', 'ب', 'ج', 'د', '0', '', ''],
+        ['', 'verbal', 'analogy', 'easy', 'سؤال جديد', 'أ', 'ب', 'ج', 'د', '1', '', ''],
+        ['', 'unknown', 'analogy', 'easy', 'قسم مجهول', 'أ', 'ب', 'ج', 'د', '1', '', ''],
+        ['']
+    ];
+    const plan = core.planCSVImport(rows, existing, 500);
+    assert.deepStrictEqual(plan.added.map(x => x.id), [500, 501]);
+    assert.ok(plan.added.every(x => x.custom === true));
+    assert.strictEqual(plan.duplicates, 2);
+    assert.strictEqual(plan.invalid, 1);
+});
+
+test('planCSVImport يبلّغ عن الأعمدة الناقصة', () => {
+    const plan = core.planCSVImport([['text', 'optionA']], [], 1);
+    assert.strictEqual(plan.error, 'missing-columns');
+    assert.ok(plan.missing.includes('section'));
+});
+
+test('unescapeCSVCell يعكس حماية الصيغ بدقة، حتى لقيمة تبدأ بفاصلة عليا أصلاً', () => {
+    for (const original of ['-8', '=SUM(A1)', '+5', '@x', "'-3", "''=x", 'نص عادي', "'نص"]) {
+        const [cell] = core.parseCSV(core.escapeCSV(original))[0];
+        assert.strictEqual(core.unescapeCSVCell(cell), original, original);
+    }
+});
+
+test('planCSVImport: تصدير بنك العينة كاملاً ثم استيراده لا يغيّر سؤالاً واحداً', () => {
+    const { getSampleQuestions } = require('../questions.js');
+    const sample = getSampleQuestions();
+    const csv = [core.CSV_HEADERS.join(','),
+        ...sample.map(x => core.questionToCSVRow(x).map(core.escapeCSV).join(','))].join('\n');
+    const plan = core.planCSVImport(core.parseCSV(csv), sample, 100000);
+    assert.strictEqual(plan.updated.length, 0);
+    assert.strictEqual(plan.added.length, 0);
+    assert.strictEqual(plan.invalid, 0);
+    assert.strictEqual(plan.unchanged, sample.length);
+});

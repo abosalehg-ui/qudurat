@@ -563,13 +563,14 @@
 
                     <div class="tool-card">
                         <h4>📊 تصدير الأسئلة CSV</h4>
-                        <p>تنزيل جميع الأسئلة في ملف Excel/CSV</p>
-                        <button type="button" class="btn btn-primary btn-block" data-action="export-csv">⬇️ تصدير CSV</button>
+                        <p>تنزيل الأسئلة في ملف Excel/CSV — كلها، أو ما أضفته أنت فقط</p>
+                        <button type="button" class="btn btn-primary btn-block stack-gap-sm" data-action="export-csv">⬇️ تصدير كل الأسئلة</button>
+                        <button type="button" class="btn btn-secondary btn-block" data-action="export-csv-custom">⬇️ تصدير أسئلتي المضافة فقط</button>
                     </div>
 
                     <div class="tool-card">
                         <h4>📥 استيراد أسئلة CSV</h4>
-                        <p>إضافة أسئلة دفعة واحدة من ملف CSV</p>
+                        <p>إضافة أسئلة أو تحديثها دفعة واحدة من ملف CSV</p>
                         <label class="btn btn-success btn-block btn-file">
                             ⬆️ اختر ملف CSV
                             <input type="file" accept=".csv,text/csv" id="importCsvInput" data-change="import-csv" class="visually-hidden">
@@ -579,8 +580,9 @@
 
                 <div class="notice notice-warning">
                     <strong>تنسيق ملف CSV المطلوب:</strong><br>
-                    <code>id, section, subcategory, difficulty, text, optionA, optionB, optionC, optionD, correct, explanation</code><br>
-                    <small>section: verbal أو quant • subcategory: من فئات القسم • difficulty: easy/medium/hard • correct: 0-3</small>
+                    <code>id, section, subcategory, difficulty, text, optionA, optionB, optionC, optionD, correct, explanation, context</code><br>
+                    <small>section: verbal أو quant • subcategory: من فئات القسم • difficulty: easy/medium/hard • correct: 0-3 • explanation وcontext اختياريان</small><br>
+                    <small>صف بـ<code>id</code> سؤال موجود يُحدّث ذلك السؤال، وصف بلا <code>id</code> (أو بمعرّف غير موجود) يُضاف سؤالاً جديداً، وصف يطابق نصّه سؤالاً موجوداً يُتخطّى — فتصدير الملف وتعديله ثم استيراده لا يكرر الأسئلة.</small>
                 </div>
             </div>
         </div>

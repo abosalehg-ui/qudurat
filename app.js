@@ -245,7 +245,11 @@ function askPassword({ title, intro, label1, label2 = null, error = '' }) {
     });
 }
 
+// تُحسم بـ{ password, confirm } أو null. الحقلان يُفرَّغان دائماً عند الإغلاق،
+// فلا تبقى كلمة المرور في الـDOM (كانت تُحفظ نصاً صريحاً في سمة data-last-value).
 function resolvePassword(value) {
+    document.getElementById('passwordInput1').value = '';
+    document.getElementById('passwordInput2').value = '';
     closeModal('passwordModal');
     const r = passwordResolver;
     passwordResolver = null;
@@ -317,6 +321,47 @@ function saveData() {
     return ok;
 }
 
+// كل تعديل على المحتوى يمرّ من هنا: إن فشل الحفظ يُعاد المحتوى والتقدم كما كانا،
+// فلا تظهر رسالة «✓ تم» لتغيير ضاع فعلاً.
+function commitChange(mutate) {
+    const snapshot = JSON.stringify({ userContent, userProgress });
+    mutate();
+    rebuildDB();
+    if (saveData()) return true;
+    const restored = JSON.parse(snapshot);
+    userContent = restored.userContent;
+    userProgress = restored.userProgress;
+    rebuildDB();
+    showToast('تعذّر الحفظ فلم يُطبَّق التغيير — قد تكون مساحة التخزين ممتلئة. صدّر نسخة احتياطية.', 'error', 6000);
+    return false;
+}
+
+// المحذوف من العينة داخل الحساب حتى لا يُعاد استخدام معرّفه لسؤال جديد
+function nextQuestionId() {
+    return nextId([
+        ...getSampleQuestions().map(q => q.id),
+        ...userContent.customQuestions.map(q => q.id),
+        ...userContent.deletedQuestionIds
+    ]);
+}
+
+function nextTestId() {
+    return nextId([
+        ...getSampleTests().map(t => t.id),
+        ...userContent.customTests.map(t => t.id),
+        ...userContent.deletedTestIds
+    ]);
+}
+
+// سؤال مخصص يُستبدل في مكانه، وسؤال العينة يُحفظ تجاوزاً (override) حتى لا يضيع عند تحديث المحتوى
+function applyQuestionUpdate(q) {
+    if (q.custom) {
+        userContent.customQuestions = userContent.customQuestions.map(x => (x.id === q.id ? q : x));
+    } else {
+        userContent.questionOverrides[q.id] = { ...q };
+    }
+}
+
 // ==================== Admin Authentication ====================
 // ملاحظة صريحة: هذه حماية *تنظيمية* لا أمنية. التطبيق كله يعمل في المتصفح،
 // فمن يملك وصولاً للجهاز أو للـ console يستطيع تجاوزها. الغرض منها منع
@@ -367,14 +412,14 @@ async function ensureAdminAuth() {
         await new Promise(r => setTimeout(r, wait * 1000));
     }
 
-    const pwd = await askPassword({
+    const answer = await askPassword({
         title: '🔐 لوحة التحكم محمية',
         intro: 'أدخل كلمة المرور للمتابعة.',
         label1: 'كلمة المرور'
     });
-    if (pwd === null) return false;
+    if (answer === null) return false;
 
-    const hash = await derivePassword(pwd, storedSalt);
+    const hash = await derivePassword(answer.password, storedSalt);
     if (timingSafeEqual(hash, storedHash)) {
         failedAttempts = 0;
         storageSet(sessionStorage, STORAGE_KEYS.adminUnlocked, '1');
@@ -388,15 +433,15 @@ async function ensureAdminAuth() {
 async function setupAdminPassword() {
     let error = '';
     for (let attempt = 0; attempt < 5; attempt++) {
-        const pwd = await askPassword({
+        const answer = await askPassword({
             title: '🔐 إعداد كلمة المرور',
             intro: `اختر كلمة مرور لحماية لوحة التحكم على هذا الجهاز (${MIN_PASSWORD_LENGTH} أحرف على الأقل). لا تستخدم كلمة مرور تستعملها في خدمة أخرى.`,
             label1: 'كلمة المرور الجديدة',
             label2: 'تأكيد كلمة المرور',
             error
         });
-        if (pwd === null) return false;
-        const confirmPwd = document.getElementById('passwordInput2').dataset.lastValue || '';
+        if (answer === null) return false;
+        const { password: pwd, confirm: confirmPwd } = answer;
         if (pwd.length < MIN_PASSWORD_LENGTH) { error = `كلمة المرور قصيرة جداً (${MIN_PASSWORD_LENGTH} أحرف على الأقل)`; continue; }
         if (pwd !== confirmPwd) { error = 'كلمتا المرور غير متطابقتين'; continue; }
 
@@ -418,13 +463,13 @@ async function changeAdminPassword() {
         await setupAdminPassword();
         return;
     }
-    const oldPwd = await askPassword({
+    const oldAnswer = await askPassword({
         title: 'تغيير كلمة المرور',
         intro: 'أدخل كلمة المرور الحالية أولاً.',
         label1: 'كلمة المرور الحالية'
     });
-    if (oldPwd === null) return;
-    const oldHash = await derivePassword(oldPwd, storedSalt);
+    if (oldAnswer === null) return;
+    const oldHash = await derivePassword(oldAnswer.password, storedSalt);
     if (!timingSafeEqual(oldHash, storedHash)) {
         showToast('كلمة المرور الحالية غير صحيحة', 'error');
         return;
@@ -445,30 +490,29 @@ function logoutAdmin() {
 // وrenderRoute هي المسؤولة عن العرض عند كل تغيير.
 let currentPage = '';
 const VALID_PAGES = new Set(['home', 'verbal', 'quant', 'tests', 'practice', 'results', 'solved', 'saved', 'progress', 'admin']);
-let routing = false;
+
+// إعادة توجيه بلا إطلاق hashchange ولا خطوة جديدة في سجل المتصفح. (علم «routing»
+// السابق لم يكن يحمي شيئاً: hashchange يُطلَق لاحقاً بعد أن يعود العلم false.)
+function redirectRoute(pageName) {
+    history.replaceState(null, '', `#${pageName}`);
+    return renderRoute();
+}
 
 async function renderRoute() {
-    if (routing) return;
     const raw = location.hash.replace('#', '') || 'home';
     const pageName = VALID_PAGES.has(raw) ? raw : 'home';
     if (pageName === currentPage) return;
 
     // صفحة التدريب بلا جلسة نشطة (رابط مباشر أو رجوع بعد الانتهاء)
     if (pageName === 'practice' && !currentSession.mode) {
-        routing = true;
-        location.hash = 'home';
-        routing = false;
-        return;
+        return redirectRoute('home');
     }
 
     // حماية الاختبار المؤقت الجاري من مغادرة غير مقصودة بزر الرجوع
     if (currentPage === 'practice' && currentSession.mode === 'test' && timerInterval && pageName !== 'results') {
         const leave = await askConfirm('لديك اختبار جارٍ — ستُلغى نتيجته إذا غادرت. هل تريد المغادرة؟', { okLabel: 'مغادرة' });
         if (!leave) {
-            routing = true;
-            location.hash = 'practice';
-            routing = false;
-            return;
+            return redirectRoute('practice');
         }
         clearSession();
     }
@@ -476,10 +520,7 @@ async function renderRoute() {
     if (pageName === 'admin') {
         const ok = await ensureAdminAuth();
         if (!ok) {
-            routing = true;
-            location.hash = currentPage || 'home';
-            routing = false;
-            return;
+            return redirectRoute(currentPage || 'home');
         }
     }
 
@@ -773,7 +814,9 @@ function renderQuestion() {
 
     document.getElementById('prevBtn').classList.toggle('is-hidden', current <= 1);
     document.getElementById('nextBtn').classList.toggle('is-hidden', current >= total);
-    document.getElementById('finishBtn').classList.toggle('is-hidden', current !== total);
+    // التدريب الحر يُنهى في أي لحظة (فيه كل أسئلة الفئة: من 37 إلى 90 سؤالاً)
+    const canFinish = current === total || currentSession.mode === 'practice';
+    document.getElementById('finishBtn').classList.toggle('is-hidden', !canFinish);
 }
 
 // تحديث زر الحفظ وحده بدل إعادة بناء السؤال كاملاً (يحافظ على التركيز)
@@ -796,7 +839,10 @@ function selectOption(index) {
 
     const q = currentSession.questions[currentSession.currentIndex];
     if (currentSession.mode === 'practice') {
-        updateCategoryProgress(q.section, q.subcategory, index === q.correct);
+        // التدريب الحر يُحتسب لحظة الإجابة: الطالب يتوقف متى شاء ولا يضيع جهده
+        const prevPoints = userProgress.points;
+        creditAnswers(userProgress, [{ key: `${q.section}_${q.subcategory}`, correct: index === q.correct }]);
+        afterProgressChange(prevPoints);
     }
     persistSession();
     renderQuestion();
@@ -842,7 +888,25 @@ function nextQuestion() {
 function finishPractice() {
     stopTimer();
     const results = calculateSessionResults(currentSession);
-    saveResults(results);
+
+    if (currentSession.mode === 'practice' && results.total === 0) {
+        const back = currentSession.section || 'home';
+        clearSession();
+        showToast('لم تُجب عن أي سؤال بعد — لا توجد نتيجة لعرضها');
+        showPage(back);
+        return;
+    }
+
+    const prevPoints = userProgress.points;
+    const outcome = applySessionToProgress(userProgress, currentSession, results);
+    if (outcome.dailyCompleted) {
+        showToast(`🎉 أحسنت! +${DAILY_CHALLENGE_BONUS} نقطة مكافأة`, 'success', 4000);
+    } else if (currentSession.mode === 'daily') {
+        showToast('أجب الأسئلة الخمسة كلها لإكمال تحدي اليوم', 'warning', 5000);
+    }
+    renderDailyChallenge();
+    afterProgressChange(prevPoints);
+
     renderResults(results);
     clearSession();
     showPage('results');
@@ -887,37 +951,15 @@ function stopTimer() {
     if (container) container.classList.remove('show');
 }
 
-function saveResults(results) {
-    userProgress.questionsAnswered += results.total;
-    userProgress.correctAnswers += results.correct;
-
-    awardPoints(results.correct * POINTS_PER_CORRECT);
-
-    if (results.mode === 'test') {
-        userProgress.testResults.push({
-            date: new Date().toISOString(),
-            name: results.testName,
-            percentage: results.percentage,
-            correct: results.correct,
-            total: results.total,
-            timeSpent: results.timeSpent
-        });
+// بعد أي احتساب للتقدم (منطقه في app-core.js): ترقية المستوى، التتابع، الشارات، الحفظ
+function afterProgressChange(prevPoints) {
+    const prevLevel = getLevel(prevPoints || 0);
+    const newLevel = getLevel(userProgress.points || 0);
+    if (newLevel > prevLevel) {
+        showToast(`🎉 ترقية! وصلت إلى المستوى ${newLevel}`, 'success', 4000);
     }
-
-    if (results.mode === 'daily') {
-        completeDailyChallenge(results.correct);
-    }
-
-    const today = getTodayKey();
-    if (!userProgress.dailyStats[today]) {
-        userProgress.dailyStats[today] = { questions: 0, correct: 0 };
-    }
-    userProgress.dailyStats[today].questions += results.total;
-    userProgress.dailyStats[today].correct += results.correct;
-
-    updateStreak();
-    saveData();
-    checkAndAwardBadges();
+    renderStreak();
+    checkAndAwardBadges(); // يحفظ
 }
 
 function renderResults(results) {
@@ -983,37 +1025,8 @@ function renderResults(results) {
 }
 
 // ==================== Progress Tracking ====================
-function updateCategoryProgress(section, subcategory, isCorrect) {
-    const key = `${section}_${subcategory}`;
-    if (!userProgress.categoryProgress[key]) {
-        userProgress.categoryProgress[key] = { attempted: 0, correct: 0 };
-    }
-    userProgress.categoryProgress[key].attempted++;
-    if (isCorrect) userProgress.categoryProgress[key].correct++;
-    saveData();
-}
-
-// يُستدعى عند إكمال تدريب أو اختبار فعلي — لا عند مجرد فتح التطبيق
-function updateStreak() {
-    const today = getTodayKey();
-    const yesterday = getTodayKey(new Date(Date.now() - 86400000));
-
-    if (userProgress.lastActive === today) {
-        // نشط اليوم بالفعل
-    } else if (userProgress.lastActive === yesterday) {
-        userProgress.streak++;
-        userProgress.lastActive = today;
-    } else {
-        userProgress.streak = 1;
-        userProgress.lastActive = today;
-    }
-    renderStreak();
-}
-
 function renderStreak() {
-    const today = getTodayKey();
-    const yesterday = getTodayKey(new Date(Date.now() - 86400000));
-    const stillActive = userProgress.lastActive === today || userProgress.lastActive === yesterday;
+    const stillActive = userProgress.lastActive === getTodayKey() || userProgress.lastActive === getYesterdayKey();
     document.getElementById('streakCount').textContent = stillActive ? userProgress.streak : 0;
 }
 
@@ -1281,12 +1294,20 @@ function showAdminTab(tab, btn) {
     if (tab === 'tests') renderAdminTests();
 }
 
+function subcategoryOptions(section, selected) {
+    return (SUBCATEGORIES[section] || []).map(value =>
+        `<option value="${escapeHTML(value)}" ${value === selected ? 'selected' : ''}>${escapeHTML(getCategoryName(`${section}_${value}`))}</option>`
+    ).join('');
+}
+
 function updateSubcategories() {
     const section = document.getElementById('qSection').value;
-    const subcatSelect = document.getElementById('qSubcategory');
-    subcatSelect.innerHTML = (SUBCATEGORIES[section] || []).map(value =>
-        `<option value="${escapeHTML(value)}">${escapeHTML(getCategoryName(`${section}_${value}`))}</option>`
-    ).join('');
+    document.getElementById('qSubcategory').innerHTML = subcategoryOptions(section);
+}
+
+function updateEditSubcategories() {
+    const section = document.getElementById('editSection').value;
+    document.getElementById('editSubcategory').innerHTML = subcategoryOptions(section);
 }
 
 function showFormErrors(containerId, errors) {
@@ -1317,7 +1338,7 @@ const ADD_FIELDS = ['qText', 'optionA', 'optionB', 'optionC', 'optionD', 'qExpla
 function addQuestion() {
     const options = ['optionA', 'optionB', 'optionC', 'optionD'].map(id => document.getElementById(id).value.trim());
     const newQ = {
-        id: Date.now(),
+        id: nextQuestionId(),
         section: document.getElementById('qSection').value,
         subcategory: document.getElementById('qSubcategory').value,
         difficulty: document.getElementById('qDifficulty').value,
@@ -1342,13 +1363,7 @@ function addQuestion() {
     }
     showFormErrors('addQuestionErrors', []);
 
-    userContent.customQuestions.push(newQ);
-    rebuildDB();
-    if (!saveData()) {
-        userContent.customQuestions.pop();
-        rebuildDB();
-        return;
-    }
+    if (!commitChange(() => userContent.customQuestions.push(newQ))) return;
 
     ['qContext', 'qText', 'optionA', 'optionB', 'optionC', 'optionD', 'qExplanation']
         .forEach(id => { document.getElementById(id).value = ''; });
@@ -1365,12 +1380,12 @@ let tablePage = 1;
 function filteredQuestions() {
     const section = document.getElementById('filterSection').value;
     const difficulty = document.getElementById('filterDifficulty').value;
-    const search = document.getElementById('filterSearch').value.trim();
+    const search = normalizeArabic(document.getElementById('filterSearch').value);
 
     return questionsDB.filter(q =>
         (section === 'all' || q.section === section) &&
         (difficulty === 'all' || q.difficulty === difficulty) &&
-        (!search || String(q.text).includes(search))
+        (!search || normalizeArabic(q.text).includes(search))
     );
 }
 
@@ -1416,14 +1431,15 @@ async function deleteQuestion(qId) {
     const ok = await askConfirm(`سيُحذف السؤال: «${String(q.text).slice(0, 60)}»`, { title: 'حذف سؤال', okLabel: 'حذف' });
     if (!ok) return;
 
-    if (q.custom) {
-        userContent.customQuestions = userContent.customQuestions.filter(x => x.id !== qId);
-    } else {
-        if (!userContent.deletedQuestionIds.includes(qId)) userContent.deletedQuestionIds.push(qId);
-        delete userContent.questionOverrides[qId];
-    }
-    rebuildDB();
-    saveData();
+    const saved = commitChange(() => {
+        if (q.custom) {
+            userContent.customQuestions = userContent.customQuestions.filter(x => x.id !== qId);
+        } else {
+            if (!userContent.deletedQuestionIds.includes(qId)) userContent.deletedQuestionIds.push(qId);
+            delete userContent.questionOverrides[qId];
+        }
+    });
+    if (!saved) return;
     renderQuestionsTable();
     updateUI();
     showToast('حُذف السؤال');
@@ -1434,6 +1450,28 @@ function editQuestion(qId) {
     if (!q) return;
 
     document.getElementById('editModalContent').innerHTML = `
+        <div class="form-row">
+            <div class="form-group">
+                <label class="form-label" for="editSection">القسم</label>
+                <select class="form-select" id="editSection" data-change="update-edit-subcategories">
+                    ${SECTIONS.map(s => `<option value="${escapeHTML(s)}" ${q.section === s ? 'selected' : ''}>${escapeHTML(SECTION_LABELS[s] || s)}</option>`).join('')}
+                </select>
+            </div>
+            <div class="form-group">
+                <label class="form-label" for="editSubcategory">الفئة الفرعية</label>
+                <select class="form-select" id="editSubcategory">${subcategoryOptions(q.section, q.subcategory)}</select>
+            </div>
+            <div class="form-group">
+                <label class="form-label" for="editDifficulty">مستوى الصعوبة</label>
+                <select class="form-select" id="editDifficulty">
+                    ${DIFFICULTIES.map(d => `<option value="${escapeHTML(d)}" ${q.difficulty === d ? 'selected' : ''}>${escapeHTML(getDifficultyLabel(d))}</option>`).join('')}
+                </select>
+            </div>
+        </div>
+        <div class="form-group">
+            <label class="form-label" for="editContext">نص السياق (اختياري - للاستيعاب المقروء)</label>
+            <textarea class="form-textarea" id="editContext">${escapeHTML(q.context || '')}</textarea>
+        </div>
         <div class="form-group">
             <label class="form-label" for="editText">نص السؤال</label>
             <textarea class="form-textarea" id="editText">${escapeHTML(q.text)}</textarea>
@@ -1468,25 +1506,26 @@ function saveEdit(qId) {
 
     const updated = {
         ...q,
+        section: document.getElementById('editSection').value,
+        subcategory: document.getElementById('editSubcategory').value,
+        difficulty: document.getElementById('editDifficulty').value,
+        context: document.getElementById('editContext').value.trim() || null,
         text: document.getElementById('editText').value.trim(),
         options: [0, 1, 2, 3].map(i => document.getElementById(`editOpt${i}`).value.trim()),
         correct: parseInt(document.getElementById('editCorrect').value, 10),
         explanation: document.getElementById('editExplanation').value.trim()
     };
 
-    const errors = validateQuestion(updated);
+    const errors = validateQuestion(updated).concat(validateQuestionMeta(updated));
     if (errors.length) {
         showFormErrors('editErrors', errors);
         return;
     }
 
-    Object.assign(q, updated);
-    // تعديل سؤال عينة يُحفظ كتجاوز (override) حتى لا يضيع عند تحديث المحتوى
-    if (!q.custom) userContent.questionOverrides[q.id] = { ...q };
-
-    saveData();
+    if (!commitChange(() => applyQuestionUpdate(updated))) return;
     closeModal('editModal');
     renderQuestionsTable();
+    updateUI();
     showToast('✓ حُفظت التعديلات', 'success');
 }
 
@@ -1515,17 +1554,16 @@ function createTest() {
     }
     showFormErrors('createTestErrors', []);
 
-    userContent.customTests.push({
-        id: Date.now(),
+    const newTest = {
+        id: nextTestId(),
         name,
         verbalCount,
         quantCount,
         timeLimit,
         description: `${verbalCount + quantCount} سؤال في ${timeLimit} دقيقة`,
         custom: true
-    });
-    rebuildDB();
-    saveData();
+    };
+    if (!commitChange(() => userContent.customTests.push(newTest))) return;
 
     document.getElementById('testName').value = '';
     renderAdminTests();
@@ -1552,13 +1590,14 @@ async function deleteTest(testId) {
     const ok = await askConfirm(`سيُحذف الاختبار «${t.name}»`, { title: 'حذف اختبار', okLabel: 'حذف' });
     if (!ok) return;
 
-    if (t.custom) {
-        userContent.customTests = userContent.customTests.filter(x => x.id !== testId);
-    } else if (!userContent.deletedTestIds.includes(testId)) {
-        userContent.deletedTestIds.push(testId);
-    }
-    rebuildDB();
-    saveData();
+    const saved = commitChange(() => {
+        if (t.custom) {
+            userContent.customTests = userContent.customTests.filter(x => x.id !== testId);
+        } else if (!userContent.deletedTestIds.includes(testId)) {
+            userContent.deletedTestIds.push(testId);
+        }
+    });
+    if (!saved) return;
     renderAdminTests();
     renderTests();
     updateUI();
@@ -1584,15 +1623,6 @@ const BADGES = [
     { id: 'level5',     icon: '⭐', name: 'المستوى 5',         desc: 'وصلت إلى المستوى 5',        check: p => getLevel(p.points || 0) >= 5 },
     { id: 'level10',    icon: '🌟', name: 'المستوى 10',        desc: 'وصلت إلى المستوى 10',       check: p => getLevel(p.points || 0) >= 10 }
 ];
-
-function awardPoints(amount) {
-    const prevLevel = getLevel(userProgress.points || 0);
-    userProgress.points = (userProgress.points || 0) + amount;
-    const newLevel = getLevel(userProgress.points);
-    if (newLevel > prevLevel) {
-        showToast(`🎉 ترقية! وصلت إلى المستوى ${newLevel}`, 'success', 4000);
-    }
-}
 
 function checkAndAwardBadges() {
     userProgress.badges = userProgress.badges || [];
@@ -1670,7 +1700,7 @@ function renderDailyChallenge() {
         <div class="daily-row">
             <div>
                 <div class="daily-title"><span aria-hidden="true">🔥</span> تحدي اليوم</div>
-                <div class="daily-sub">5 أسئلة - مكافأة 50 نقطة عند الإكمال</div>
+                <div class="daily-sub">5 أسئلة — أجبها كلها واكسب ${DAILY_CHALLENGE_BONUS} نقطة مكافأة</div>
             </div>
             <button type="button" class="btn btn-glass" data-action="start-daily">ابدأ الآن</button>
         </div>
@@ -1695,15 +1725,6 @@ function startDailyChallenge() {
     persistSession();
     showPage('practice');
     renderQuestion();
-}
-
-function completeDailyChallenge(correctCount) {
-    userProgress.dailyChallenge.completed = true;
-    userProgress.dailyChallenge.correct = correctCount;
-    userProgress.dailyChallengesCompleted = (userProgress.dailyChallengesCompleted || 0) + 1;
-    awardPoints(50);
-    showToast('🎉 أحسنت! +50 نقطة مكافأة', 'success', 4000);
-    renderDailyChallenge();
 }
 
 // ==================== Print / PDF Export ====================
@@ -1812,6 +1833,8 @@ async function importAllData(input) {
 
         let skipped = 0;
         const next = emptyUserContent();
+        let nextContent = userContent;
+        let nextProgress = userProgress;
 
         if (isV2) {
             const rawQ = (Array.isArray(data.customQuestions) ? data.customQuestions : []).slice(0, MAX_IMPORT_ITEMS);
@@ -1820,8 +1843,9 @@ async function importAllData(input) {
 
             const rawOverrides = (data.questionOverrides && typeof data.questionOverrides === 'object' && !Array.isArray(data.questionOverrides))
                 ? Object.entries(data.questionOverrides).slice(0, MAX_IMPORT_ITEMS) : [];
-            for (const [id, q] of rawOverrides) {
-                if (isValidImportedQuestion(q)) next.questionOverrides[id] = q;
+            for (const [key, q] of rawOverrides) {
+                // المفتاح يُفحص كالسؤال: رقم يطابق معرّفه (انظر isValidOverrideEntry)
+                if (isValidOverrideEntry(key, q) && isValidImportedQuestion(q)) next.questionOverrides[q.id] = q;
                 else skipped++;
             }
 
@@ -1832,10 +1856,10 @@ async function importAllData(input) {
             next.customTests = rawT.filter(isValidImportedTest).map(t => ({ ...t, custom: true }));
             skipped += rawT.length - next.customTests.length;
 
-            userContent = next;
+            nextContent = next;
             if (data.progress && typeof data.progress === 'object' && !Array.isArray(data.progress)) {
                 // ملف النسخة الاحتياطية خارجي بالكامل — يُجبر التقدم على شكله الصحيح
-                userProgress = pruneProgress(sanitizeProgress({ ...userProgress, ...data.progress }));
+                nextProgress = pruneProgress(sanitizeProgress({ ...userProgress, ...data.progress }));
             }
         } else {
             // نسخة احتياطية بالصيغة القديمة (قاعدة كاملة): نستخرج محتوى المستخدم منها
@@ -1846,12 +1870,15 @@ async function importAllData(input) {
             const validT = rawT.filter(isValidImportedTest);
             skipped += rawT.length - validT.length;
             const migrated = migrateLegacyData({ ...data, questions: validQ, tests: validT }, getSampleQuestions(), getSampleTests());
-            userContent = migrated.userContent;
-            if (migrated.progress) userProgress = pruneProgress(sanitizeProgress({ ...userProgress, ...migrated.progress }));
+            nextContent = migrated.userContent;
+            if (migrated.progress) nextProgress = pruneProgress(sanitizeProgress({ ...userProgress, ...migrated.progress }));
         }
 
-        rebuildDB();
-        saveData();
+        const saved = commitChange(() => {
+            userContent = nextContent;
+            userProgress = nextProgress;
+        });
+        if (!saved) return;
         renderQuestionsTable();
         renderAdminTests();
         renderTests();
@@ -1869,15 +1896,17 @@ async function importAllData(input) {
     }
 }
 
-function exportQuestionsCSV() {
-    const headers = ['id', 'section', 'subcategory', 'difficulty', 'text', 'optionA', 'optionB', 'optionC', 'optionD', 'correct', 'explanation'];
-    const rows = questionsDB.map(q => [
-        q.id, q.section, q.subcategory, q.difficulty,
-        q.text, q.options[0], q.options[1], q.options[2], q.options[3],
-        q.correct, q.explanation || ''
-    ].map(escapeCSV).join(','));
-    const csv = '﻿' + headers.join(',') + '\n' + rows.join('\n');
-    downloadBlob(new Blob([csv], { type: 'text/csv;charset=utf-8' }), `qudurat-questions-${getTodayKey()}.csv`);
+// onlyCustom: أسئلة المستخدم المضافة وحدها — للمشاركة بين الأجهزة بلا أسئلة العينة
+function exportQuestionsCSV(onlyCustom = false) {
+    const list = onlyCustom ? questionsDB.filter(q => q.custom) : questionsDB;
+    if (!list.length) {
+        showToast('لا توجد أسئلة مضافة لتصديرها', 'warning');
+        return;
+    }
+    const rows = list.map(q => questionToCSVRow(q).map(escapeCSV).join(','));
+    const csv = '\uFEFF' + CSV_HEADERS.join(',') + '\n' + rows.join('\n');
+    const name = onlyCustom ? 'my-questions' : 'questions';
+    downloadBlob(new Blob([csv], { type: 'text/csv;charset=utf-8' }), `qudurat-${name}-${getTodayKey()}.csv`);
     showToast('✓ تم تصدير الأسئلة', 'success');
 }
 
@@ -1894,45 +1923,35 @@ async function importQuestionsCSV(input) {
             showToast('❌ الملف فارغ', 'error');
             return;
         }
-        const headers = rows[0].map(h => h.trim());
-        const required = ['section', 'subcategory', 'difficulty', 'text', 'optionA', 'optionB', 'optionC', 'optionD', 'correct'];
-        const missing = required.filter(h => !headers.includes(h));
-        if (missing.length) {
-            showToast(`❌ أعمدة ناقصة: ${missing.join('، ')}`, 'error', 5000);
+        // الصف بمعرّف موجود يحدّث سؤاله، والجديد يُضاف، والمكرر نصاً يُتخطّى (planCSVImport)
+        const plan = planCSVImport(rows, questionsDB, nextQuestionId(), MAX_IMPORT_ITEMS);
+        if (plan.error) {
+            showToast(`❌ أعمدة ناقصة: ${plan.missing.join('، ')}`, 'error', 5000);
             return;
         }
-        const idx = name => headers.indexOf(name);
-        const added = [];
-        let skipped = 0;
-        const limit = Math.min(rows.length, MAX_IMPORT_ITEMS + 1);
-        for (let i = 1; i < limit; i++) {
-            const r = rows[i];
-            if (!r || r.length < required.length) { skipped++; continue; }
-            const newQ = {
-                id: Date.now() + i,
-                section: (r[idx('section')] || '').trim(),
-                subcategory: (r[idx('subcategory')] || '').trim(),
-                difficulty: (r[idx('difficulty')] || '').trim(),
-                text: (r[idx('text')] || '').trim(),
-                options: ['optionA', 'optionB', 'optionC', 'optionD'].map(h => (r[idx(h)] || '').trim()),
-                correct: parseInt(r[idx('correct')], 10),
-                explanation: idx('explanation') >= 0 ? (r[idx('explanation')] || '').trim() : '',
-                custom: true
-            };
-            // نفس التحقق الذي يمرّ به الاستيراد من JSON — التصنيف يدخل HTML
-            if (validateQuestion(newQ).length === 0 && validateQuestionMeta(newQ).length === 0) added.push(newQ);
-            else skipped++;
-        }
-        if (!added.length) {
-            showToast(`❌ لم يُستورد أي سؤال (${skipped} صفاً غير صالح)`, 'error', 5000);
+        const skipped = plan.invalid + plan.duplicates;
+        if (!plan.added.length && !plan.updated.length) {
+            const nothingNew = plan.unchanged > 0 && !skipped;
+            showToast(nothingNew
+                ? 'لا جديد في الملف — كل أسئلته مطابقة للموجود'
+                : `❌ لم يُستورد أي سؤال (غير صالح: ${plan.invalid}، مكرر: ${plan.duplicates})`, nothingNew ? 'info' : 'error', 5000);
             return;
         }
-        userContent.customQuestions.push(...added);
-        rebuildDB();
-        saveData();
+        const saved = commitChange(() => {
+            // تحديث الأسئلة المخصصة دفعة واحدة بخريطة بدل البحث عن كل سؤال على حدة
+            const customUpdates = new Map(plan.updated.filter(q => q.custom).map(q => [q.id, q]));
+            userContent.customQuestions = userContent.customQuestions
+                .map(x => customUpdates.get(x.id) || x)
+                .concat(plan.added);
+            plan.updated.filter(q => !q.custom).forEach(q => applyQuestionUpdate(q));
+        });
+        if (!saved) return;
         renderQuestionsTable();
         updateUI();
-        showToast(`✓ تم استيراد ${added.length} سؤالاً${skipped ? ` (تُخطي ${skipped})` : ''}`, 'success', 4000);
+        const parts = [`أُضيف ${plan.added.length}`, `حُدّث ${plan.updated.length}`];
+        if (plan.duplicates) parts.push(`تُخطّي ${plan.duplicates} مكرراً`);
+        if (plan.invalid) parts.push(`تُخطّي ${plan.invalid} غير صالح`);
+        showToast(`✓ ${parts.join('، ')}`, skipped ? 'warning' : 'success', 5000);
     } catch (err) {
         console.error('فشل استيراد ملف CSV:', err);
         showToast('❌ خطأ في قراءة الملف', 'error');
@@ -1994,7 +2013,8 @@ const ACTIONS = {
     'create-test': createTest,
     'delete-test': (el) => deleteTest(Number(el.dataset.id)),
     'export-all': exportAllData,
-    'export-csv': exportQuestionsCSV,
+    'export-csv': () => exportQuestionsCSV(false),
+    'export-csv-custom': () => exportQuestionsCSV(true),
     'export-progress': exportProgressReport,
     'print': printCurrentView,
     'change-password': changeAdminPassword,
@@ -2007,6 +2027,7 @@ const ACTIONS = {
 
 const CHANGES = {
     'update-subcategories': updateSubcategories,
+    'update-edit-subcategories': updateEditSubcategories,
     'filter-questions': filterQuestions,
     'import-json': (el) => importAllData(el),
     'import-csv': (el) => importQuestionsCSV(el)
@@ -2042,13 +2063,14 @@ function bindEvents() {
         modal.addEventListener('click', (e) => { if (e.target === modal) dismissTopModal(); });
     });
 
-    // نافذة كلمة المرور: الإرسال بـEnter، ونحتفظ بقيمة حقل التأكيد قبل إغلاقها
+    // نافذة كلمة المرور: الإرسال بـEnter، والقيمتان تمرّان في الوعد مباشرة
     const pwdForm = document.getElementById('passwordForm');
     pwdForm.addEventListener('submit', (e) => {
         e.preventDefault();
-        const input2 = document.getElementById('passwordInput2');
-        input2.dataset.lastValue = input2.value;
-        resolvePassword(document.getElementById('passwordInput1').value);
+        resolvePassword({
+            password: document.getElementById('passwordInput1').value,
+            confirm: document.getElementById('passwordInput2').value
+        });
     });
 
     window.addEventListener('hashchange', renderRoute);
